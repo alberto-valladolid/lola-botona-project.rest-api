@@ -30,7 +30,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception{
 		
 
-		//PARA TODAS LAS PETICIONES HAY QUE INICIAR SESIÓN Y PARA LAS DE SECURE ES NECESARIO SER ADMIN
+		//PARA TODAS LAS PETICIONES HAY QUE INICIAR SESIÓN, SALVO PARA /user/rest/test/notSecured Y ADEMAS, PARA LAS SECURE ES NECESARIO SER ADMIN
 		
 		
 
