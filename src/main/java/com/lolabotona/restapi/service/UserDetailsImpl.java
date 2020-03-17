@@ -14,7 +14,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CustomUserDetails implements UserDetails {
+public class UserDetailsImpl implements UserDetails {
 
 	/**
 	 * 
