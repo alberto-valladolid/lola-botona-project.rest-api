@@ -18,7 +18,7 @@ uniqueConstraints = {
 public class User {
 	@Id
 	
-	private int user_id; 
+	private Long id; 
 	private String username; //telefono
 	private String password; 
 	private String role; 
@@ -35,4 +35,46 @@ public class User {
 		this.name = name; 
 	}
 
+	
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setEmail(String name) {
+		this.name = name;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getRoles() {
+		return role;
+	}
+
+	public void setRoles(String role) {
+		this.role = role;
+	}
+	
 }
