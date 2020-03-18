@@ -1,38 +1,35 @@
+
+
+
 package com.lolabotona.restapi.service;
+
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.lolabotona.restapi.service.UserDetailsImpl;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.repository.UserRepository;
+import com.lolabotona.restapi.service.UserDetailsImpl;
 
 @Service
-public class UserDetailsServiceImpl implements UserDetailsService{
-	
-
+public class UserDetailsServiceImpl implements UserDetailsService {
 	@Autowired
-	private UserRepository userRepository;
-	
+	UserRepository userRepository;
+
 	@Override
+	@Transactional
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		User user = userRepository.findByUsername(username);
-		UserDetailsImpl userDetails = null; 
+		User user = userRepository.findByUsername(username)
+				.orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con el nombre: " + username));
 		
-		if(user!=null) {
-			userDetails = new UserDetailsImpl(); 
-			userDetails.setUser(user); 
-		}else {
-			throw new UsernameNotFoundException("El usuario "+ username + "no se ha encontrado en la base de datos");
-		}
-		
-		return userDetails;
+		return UserDetailsImpl.build(user);
 	}
 	
-	
 
-	
+
 }

@@ -5,8 +5,6 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.*; 
 
-import lombok.Getter;
-import lombok.Setter;
 
 @Entity
 @Table(	name = "users", 
@@ -28,7 +26,7 @@ public class User {
 	public User() {
 	}
 
-	public User(String username, String email, String password) {
+	public User(String username, String role, String password, String name) {
 		this.username = username;
 		this.role = role;
 		this.password = password;
@@ -69,12 +67,14 @@ public class User {
 		this.password = password;
 	}
 
-	public String getRoles() {
+	public String getRole() {
 		return role;
 	}
 
 	public void setRoles(String role) {
 		this.role = role;
 	}
+
+
 	
 }
