@@ -1,31 +1,33 @@
 package com.lolabotona.restapi.controller;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
-
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.GetMapping;
-
-
-
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/user/rest")
+@RequestMapping("/api/test")
 public class UserController {
 
 
-	@GetMapping("/test/notSecured")
-	public String notSecured() {		
-
-		return "endpoint que no necesita seguridad"; 
+	@GetMapping("/all")
+	public String allAccess() {
+		return "Public Content.";
 	}
 	
+	@GetMapping("/user")
+	@PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+	public String userAccess() {
+		return "User Content.";
+	}
 
-	@GetMapping("/test/secured")
-	public String secured() {		
 
-		return "endpoint que SI necesita seguridad"; 
+	@GetMapping("/admin")
+	@PreAuthorize("hasRole('ADMIN')")
+	public String adminAccess() {
+		return "Admin Board.";
 	}
 	
 }

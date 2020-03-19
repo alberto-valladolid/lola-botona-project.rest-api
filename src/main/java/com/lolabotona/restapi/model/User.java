@@ -3,24 +3,37 @@ package com.lolabotona.restapi.model;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import javax.persistence.*; 
 
 
 @Entity
 @Table(	name = "users", 
 uniqueConstraints = { 
-	@UniqueConstraint(columnNames = "username"),
-	@UniqueConstraint(columnNames = "email") 
+	@UniqueConstraint(columnNames = "username")
 })
 
 public class User {
 	@Id
-	
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id; 
-	private String username; //telefono
-	private String password; 
-	private String role; 
-	private String name;  //nombre
+	
+    @NotBlank
+    @Size(min = 3, max = 20)
+    private String username; //telefono
+ 
+    @NotBlank
+    @Size(max = 50)
+    private String role;
+    
+    @NotBlank
+    @Size(min = 1, max = 100)
+    private String name; //nombre
+    
+    @NotBlank
+    private String password;
+	
 	
 	
 	public User() {
@@ -55,7 +68,7 @@ public class User {
 		return name;
 	}
 
-	public void setEmail(String name) {
+	public void setName(String name) {
 		this.name = name;
 	}
 
