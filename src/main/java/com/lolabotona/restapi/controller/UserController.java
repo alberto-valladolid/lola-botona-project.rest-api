@@ -14,20 +14,20 @@ public class UserController {
 
 	@GetMapping("/all")
 	public String allAccess() {
-		return "Public Content.";
+		return "Contenido home ¿Publico?";
 	}
 	
 	@GetMapping("/user")
 	@PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
 	public String userAccess() {
-		return "User Content.";
+		return "Vista usuario";
 	}
 
 
 	@GetMapping("/admin")
 	@PreAuthorize("hasRole('ADMIN')")
 	public String adminAccess() {
-		return "Admin Board.";
+		return "Administración";
 	}
 	
 }
