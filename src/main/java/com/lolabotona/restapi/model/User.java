@@ -5,6 +5,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*; 
 
 
@@ -31,6 +34,7 @@ public class User {
     @Size(min = 1, max = 100)
     private String name; //nombre
     
+    @JsonIgnore
     @NotBlank
     private String password;
 	
