@@ -18,8 +18,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-
-
+import org.springframework.web.bind.annotation.PutMapping;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,7 +93,27 @@ public class AdminController {
         return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
       }
     }
-	
+    
+    
+    @PutMapping("/users/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable("id") long id, @RequestBody User newUser) {
+      Optional<User> storedUserData = userRepository.findById(id);
+      
+      if (storedUserData.isPresent()) { 
+        User user = storedUserData.get();
+        user.setRoles(newUser.getRole());
+        user.setName(newUser.getName());  
+        
+        if(newUser.getPassword()!= "") {    
+        	user.setPassword(passwordEncoder.encode(newUser.getPassword()));
+        }               
+        
+        return new ResponseEntity<>(userRepository.save(user), HttpStatus.OK);
+      } else {
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+      }
+    }
+    
 	
 	@PreAuthorize("hasAnyRole('ADMIN')")
 	@PostMapping("/users")

@@ -6,7 +6,8 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+//import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.persistence.*; 
 
@@ -34,8 +35,8 @@ public class User {
     @Size(min = 1, max = 100)
     private String name; //nombre
     
-    @JsonIgnore
-    @NotBlank
+    @NotBlank 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 	
 	
@@ -43,7 +44,7 @@ public class User {
 	public User() {
 	}
 
-	public User(String username, String role, String password, String name) {
+	public User(String username, String role,  String name,String password) {
 		this.username = username;
 		this.role = role;
 		this.password = password;
@@ -77,7 +78,7 @@ public class User {
 	}
 
 	public String getPassword() {
-		return password;
+		return this.password;
 	}
 
 	public void setPassword(String password) {
@@ -94,7 +95,7 @@ public class User {
 
 	@Override
 	public String toString() {
-		return "User [id=" + id + ", username=" + username + ", role=" + role + ", name=" + name + "]";
+		return "User [id=" + id + ", username=" + username + ", role=" + role + ", name=" + name + " , password=" + password + "]";
 	}
 
 	
