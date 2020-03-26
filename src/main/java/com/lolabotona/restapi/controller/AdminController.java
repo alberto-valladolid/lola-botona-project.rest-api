@@ -103,6 +103,7 @@ public class AdminController {
         User user = storedUserData.get();
         user.setRoles(newUser.getRole());
         user.setName(newUser.getName());  
+        user.setUsername(newUser.getUsername());  
         
         if(newUser.getPassword()!= "") {    
         	user.setPassword(passwordEncoder.encode(newUser.getPassword()));
