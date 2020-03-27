@@ -44,7 +44,7 @@ import org.springframework.http.ResponseEntity;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/secure/rest")
+@RequestMapping("/api/secure")
 public class AdminController {
 
 	@Autowired 
@@ -70,19 +70,19 @@ public class AdminController {
        }
      }
 	
-	
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	@GetMapping("/users/{id}")
 	public ResponseEntity<User> getUserById(@PathVariable("id") long id) {
-		Optional<User> tutorialData = userRepository.findById( id);
+		Optional<User> user = userRepository.findById( id);
 	
-		if (tutorialData.isPresent()) {
-			return new ResponseEntity<>(tutorialData.get(), HttpStatus.OK);
+		if (user.isPresent()) {
+			return new ResponseEntity<>(user.get(), HttpStatus.OK);
 		} else {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
 
-	
+	@PreAuthorize("hasAnyRole('ADMIN')")
     @DeleteMapping("/users/{id}")
     public ResponseEntity<HttpStatus> deleteUser(@PathVariable("id") long id) {
     	System.out.println("entra"); 
@@ -94,27 +94,55 @@ public class AdminController {
       }
     }
     
-    
+	
+	// ejemplo: @PreAuthorize("hasAnyRole('ADMIN') and #newUser.getUsername() == authentication.principal.username ")
+	@PreAuthorize("hasAnyRole('ADMIN')")
     @PutMapping("/users/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable("id") long id, @RequestBody User newUser) {
+    public ResponseEntity<?> updateUser(@PathVariable("id") long id, @RequestBody User newUser) {
       Optional<User> storedUserData = userRepository.findById(id);
       
+      
       if (storedUserData.isPresent()) { 
-        User user = storedUserData.get();
-        user.setRoles(newUser.getRole());
-        user.setName(newUser.getName());  
-        user.setUsername(newUser.getUsername());  
-        
-        if(newUser.getPassword()!= "") {    
-        	user.setPassword(passwordEncoder.encode(newUser.getPassword()));
-        }               
-        
-        return new ResponseEntity<>(userRepository.save(user), HttpStatus.OK);
+    	  User user = storedUserData.get();    	
+          if(user.getUsername().equals(newUser.getUsername())   ){
+              
+              user.setRoles(newUser.getRole());
+              user.setName(newUser.getName());  
+              user.setUsername(newUser.getUsername());  
+              
+              if(newUser.getPassword()!= "") {    
+              	user.setPassword(passwordEncoder.encode(newUser.getPassword()));
+              }               
+              
+              return new ResponseEntity<>(userRepository.save(user), HttpStatus.OK);
+              
+          } else {
+        	 
+        	  if(!userRepository.existsByUsername(newUser.getUsername())   ) {       
+                
+                  user.setRoles(newUser.getRole());
+                  user.setName(newUser.getName());  
+                  user.setUsername(newUser.getUsername());  
+                  
+                  if(newUser.getPassword()!= "") {    
+                  	user.setPassword(passwordEncoder.encode(newUser.getPassword()));
+                  }               
+                  
+                  return new ResponseEntity<>(userRepository.save(user), HttpStatus.OK);
+                
+              }else {
+          	       return ResponseEntity
+	      					.badRequest()
+	      					.body(new MessageResponse("Error: Ya existe un usuario con ese teléfono!"));
+              }    
+        	  
+          }      
+          
       } else {
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+          return new ResponseEntity<>(HttpStatus.NOT_FOUND);
       }
-    }
-    
+              
+    }    
 	
 	@PreAuthorize("hasAnyRole('ADMIN')")
 	@PostMapping("/users")
@@ -122,7 +150,7 @@ public class AdminController {
 		if (userRepository.existsByUsername(signUpRequest.getUsername())) {
 			return ResponseEntity
 					.badRequest()
-					.body(new MessageResponse("Error: Ya hay un usuario con ese teléfono!"));
+					.body(new MessageResponse("Error: Ya existe un usuario con ese teléfono!"));
 		}
 
 		// Create new user's account
@@ -146,12 +174,5 @@ public class AdminController {
 		return ResponseEntity.ok(new MessageResponse("Usuario creado con éxito!"));
 	}
 	
-	
-	@PreAuthorize("hasAnyRole('ADMIN')")
-	@GetMapping("/admin/hi")
-	public String holaMundo() {		
-
-		return "Hola mundo"; 
-	}
 	
 }
