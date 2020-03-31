@@ -6,8 +6,12 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 //import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Objects;
+import java.util.Set;
 
 import javax.persistence.*; 
 
@@ -19,9 +23,15 @@ uniqueConstraints = {
 })
 
 public class User {
+	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id; 
+	
+	@JsonManagedReference
+    @OneToMany(mappedBy = "user")
+    private Set<UserGroup> groupSet;
 	
     @NotBlank
     @Size(min = 3, max = 20)
@@ -61,6 +71,14 @@ public class User {
 		this.id = id;
 	}
 
+	public Set<UserGroup> getGroupSet() {
+        return groupSet;
+    }
+	
+	public void setGroupSet(Set<UserGroup> groupSet) {
+        this.groupSet = groupSet;
+    } 
+	
 	public String getUsername() {
 		return username;
 	}
@@ -97,6 +115,12 @@ public class User {
 	public String toString() {
 		return "User [id=" + id + ", username=" + username + ", role=" + role + ", name=" + name + " , password=" + password + "]";
 	}
-
 	
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof UserGroup)) return false;
+        User that = (User) o;
+        return Objects.equals(username, that.username)  ;
+    }
 }
