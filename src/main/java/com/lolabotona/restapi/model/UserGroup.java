@@ -7,22 +7,27 @@ import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.Transient;
 //import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 
+
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonView;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@NoArgsConstructor
 @Getter
 @Setter
-@NoArgsConstructor
 
 @Entity
 @IdClass(UserGroupKey.class)
@@ -35,6 +40,9 @@ public class UserGroup implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	
+	
+	
 
 	@JsonBackReference
 	@Id
@@ -47,8 +55,8 @@ public class UserGroup implements Serializable {
     @ManyToOne
     @JoinColumn(name = "group_id", referencedColumnName = "id")
     private Group group;
-    
-    
+	
+
  
     @NotBlank    
     private String type; //recurrent, absencse or  retrieve 
@@ -59,12 +67,24 @@ public class UserGroup implements Serializable {
     private Timestamp dateAt; // for absencse or retrieve 
     
     
-    public UserGroup(User user, Group group) {
+    public UserGroup(User user, Group group,String type,boolean retrieved,Timestamp dateAt) {
+    	
         this.user = user;
         this.group = group;
+        this.type = type;
+        this.retrieved = retrieved;
+        this.dateAt = dateAt;
+        
     }
     
-    
+	public long getUser_id() {	
+		return user.getId();
+	}
+
+	public long getGroup_id() {
+		return group.getId();
+	}
+	
     
     @Override
     public boolean equals(Object o) {
@@ -79,9 +99,18 @@ public class UserGroup implements Serializable {
     public int hashCode() {
         return Objects.hash(user.getName(), group.getId(), type);
     }
-
-
     
+    
+    @Override
+    public String toString() {
+    	return "UserGroup [user=" + user + ", group=" + group + ", type=" + type + ", retrieved=" + retrieved + " , dateAt=" + dateAt + "]";
+    }
+
+
+	
+	
+
+	
     
 
 }

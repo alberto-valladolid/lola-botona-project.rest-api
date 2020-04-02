@@ -3,6 +3,7 @@ package com.lolabotona.restapi.controller;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.Valid;
 
@@ -23,9 +24,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.lolabotona.restapi.repository.UserRepository;
 import com.lolabotona.restapi.repository.GroupRepository;
+import com.lolabotona.restapi.repository.UserGroupRepository;
 import com.lolabotona.restapi.service.UserDetailsImpl;
 import com.lolabotona.restapi.model.Group;
 import com.lolabotona.restapi.model.User;
+import com.lolabotona.restapi.model.UserGroup;
 import com.lolabotona.restapi.payload.request.ChgPwRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
 
@@ -36,6 +39,10 @@ public class UserController {
 
 	@Autowired 
 	private UserRepository userRepository; 
+	
+	@Autowired 
+	private UserGroupRepository userGroupRepository; 
+	
 	
 	@Autowired 
 	private GroupRepository groupRepository; 
@@ -88,43 +95,45 @@ public class UserController {
 	
 
 	
-//	@GetMapping("/group1")
-//	@PreAuthorize("(hasRole('USER')  or hasRole('ADMIN'))")
-//	public ResponseEntity<List<Group>> testGroups() {
-//	
-//		  try {
-//			   
-//		      List<Group> groups = new ArrayList<Group>();	 
-//		      groupRepository.findAll().forEach(groups::add);	
-//		      if (groups.isEmpty()) {
-//		        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-//		      }	
-//		      
-//		      System.out.println("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"+groups);
-//		      return new ResponseEntity<>(groups, HttpStatus.OK);	
-//		      
-//	       } catch (Exception e) {
-//		      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-//	       }
-//	}
-//	
-//	
-//	@GetMapping("/user1")
-//	@PreAuthorize("(hasRole('USER')  or hasRole('ADMIN'))")
-//	public ResponseEntity<List<User>> testUser() {
-//	
-//		 try {
-//			  
-//		      List<User> users = new ArrayList<User>();	 
-//		      userRepository.findAll().forEach(users::add);	
-//		      if (users.isEmpty()) {
-//		        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-//		      }	
-//		      return new ResponseEntity<>(users, HttpStatus.OK);	
-//		      
-//	       } catch (Exception e) {
-//		      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-//	       }
-//	}
+	// @GetMapping("/group1")
+	// @PreAuthorize("(hasRole('USER')  or hasRole('ADMIN'))")
+	// public ResponseEntity<List<Group>> testGroups() {
+		
+	// 	  try {
+			   
+	// 	      List<Group> groups = new ArrayList<Group>();	 
+	// 	      groupRepository.findAll().forEach(groups::add);	
+	// 	      if (groups.isEmpty()) {
+	// 	        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	// 	      }	
+		      
+	// 	      System.out.println("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"+groups);
+	// 	      return new ResponseEntity<>(groups, HttpStatus.OK);	
+		      
+	//        } catch (Exception e) {
+	// 	      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+	//        }
+	// }
+	
+	
+	
+	
+	// @GetMapping("/user1")
+	// @PreAuthorize("(hasRole('USER')  or hasRole('ADMIN'))")
+	// public ResponseEntity<List<User>> testUser() {
+	
+	// 	 try {
+			  
+	// 	      List<User> users = new ArrayList<User>();	 
+	// 	      userRepository.findAll().forEach(users::add);	
+	// 	      if (users.isEmpty()) {
+	// 	        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	// 	      }	
+	// 	      return new ResponseEntity<>(users, HttpStatus.OK);	
+		      
+	//        } catch (Exception e) {
+	// 	      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+	//        }
+	// }
 	
 }

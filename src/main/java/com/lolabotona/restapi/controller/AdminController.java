@@ -2,9 +2,11 @@ package com.lolabotona.restapi.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lolabotona.restapi.model.Group;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.payload.request.SignupRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
+import com.lolabotona.restapi.repository.GroupRepository;
 import com.lolabotona.restapi.repository.UserRepository;
 
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,6 +54,10 @@ public class AdminController {
 	
 	@Autowired
 	private PasswordEncoder passwordEncoder; 
+	
+	@Autowired 
+	private GroupRepository groupRepository; 
+	
 	
 	@PreAuthorize("hasAnyRole('ADMIN')")
 	@GetMapping("/users")
@@ -173,6 +179,28 @@ public class AdminController {
 
 		return ResponseEntity.ok(new MessageResponse("Usuario creado con éxito!"));
 	}
+	
+
+	
+	@GetMapping("/groups")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<List<Group>> testGroups() {
+	
+		  try {
+			   
+		      List<Group> groups = new ArrayList<Group>();	 
+		      groupRepository.findAll().forEach(groups::add);	
+		      if (groups.isEmpty()) {
+		        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+		      }
+		      
+		      return new ResponseEntity<>(groups, HttpStatus.OK);	
+		      
+	       } catch (Exception e) {
+		      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+	       }
+	}
+	
 	
 	
 }
