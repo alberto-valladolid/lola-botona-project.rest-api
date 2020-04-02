@@ -29,7 +29,7 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id; 
 	
-	@JsonManagedReference
+	@JsonManagedReference(value="user")
     @OneToMany(mappedBy = "user")
     private Set<UserGroup> groupSet;
 	
@@ -70,7 +70,7 @@ public class User {
 	public void setId(Long id) {
 		this.id = id;
 	}
-
+	
 	public Set<UserGroup> getGroupSet() {
         return groupSet;
     }

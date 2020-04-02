@@ -32,7 +32,7 @@ public class Group {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id; 
     
-	@JsonManagedReference
+	@JsonManagedReference(value="group")
     @OneToMany(mappedBy = "group")
     private Set<UserGroup> userSet;
 	
@@ -77,6 +77,7 @@ public class Group {
 		this.id = id;
 	}
 	
+
 	public Set<UserGroup> getUserSet() {
         return userSet;
     }

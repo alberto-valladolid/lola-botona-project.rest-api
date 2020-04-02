@@ -19,6 +19,7 @@ import javax.validation.constraints.NotBlank;
 
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import lombok.Getter;
@@ -28,7 +29,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-
 @Entity
 @IdClass(UserGroupKey.class)
 public class UserGroup implements Serializable {
@@ -44,13 +44,13 @@ public class UserGroup implements Serializable {
 	
 	
 
-	@JsonBackReference
+	@JsonBackReference(value="user")
 	@Id
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
-	@JsonBackReference
+	@JsonBackReference(value="group")
     @Id
     @ManyToOne
     @JoinColumn(name = "group_id", referencedColumnName = "id")
@@ -85,7 +85,7 @@ public class UserGroup implements Serializable {
 		return group.getId();
 	}
 	
-    
+	   
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
