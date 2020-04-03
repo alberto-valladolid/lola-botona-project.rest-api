@@ -47,13 +47,13 @@ public class UserGroup implements Serializable {
 	@JsonBackReference(value="user")
 	@Id
     @ManyToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @JoinColumn(name = "userid", referencedColumnName = "id")
     private User user;
 
 	@JsonBackReference(value="group")
     @Id
     @ManyToOne
-    @JoinColumn(name = "group_id", referencedColumnName = "id")
+    @JoinColumn(name = "groupid", referencedColumnName = "id")
     private Group group;
 	
 
@@ -64,24 +64,24 @@ public class UserGroup implements Serializable {
     @Column(name="retrieved", columnDefinition="tinyint(1) default 1")
     private boolean retrieved ; //only for  retrieve
     
-    private Timestamp dateAt; // for absencse or retrieve 
+    private Timestamp dateat; // for absencse or retrieve 
     
     
-    public UserGroup(User user, Group group,String type,boolean retrieved,Timestamp dateAt) {
+    public UserGroup(User user, Group group,String type,boolean retrieved,Timestamp dateat) {
     	
         this.user = user;
         this.group = group;
         this.type = type;
         this.retrieved = retrieved;
-        this.dateAt = dateAt;
+        this.dateat = dateat;
         
     }
     
-	public long getUser_id() {	
+	public long getuserid() {	
 		return user.getId();
 	}
 
-	public long getGroup_id() {
+	public long getgroupid() {
 		return group.getId();
 	}
 	
@@ -103,7 +103,7 @@ public class UserGroup implements Serializable {
     
     @Override
     public String toString() {
-    	return "UserGroup [user=" + user + ", group=" + group + ", type=" + type + ", retrieved=" + retrieved + " , dateAt=" + dateAt + "]";
+    	return "UserGroup [user=" + user + ", group=" + group + ", type=" + type + ", retrieved=" + retrieved + " , dateat=" + dateat + "]";
     }
 
 

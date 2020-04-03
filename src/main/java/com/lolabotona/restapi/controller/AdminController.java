@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.lolabotona.restapi.model.Group;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.payload.request.SignupRequest;
+import com.lolabotona.restapi.payload.request.NewGroupRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
 import com.lolabotona.restapi.repository.GroupRepository;
 import com.lolabotona.restapi.repository.UserRepository;
@@ -184,12 +185,13 @@ public class AdminController {
 	
 	@GetMapping("/groups")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<List<Group>> testGroups() {
+	public ResponseEntity<List<Group>> getGroups() {
 	
 		  try {
 			   
 		      List<Group> groups = new ArrayList<Group>();	 
 		      groupRepository.findAll().forEach(groups::add);	
+		      
 		      if (groups.isEmpty()) {
 		        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 		      }
@@ -201,6 +203,41 @@ public class AdminController {
 	       }
 	}
 	
+	
+	@PreAuthorize("hasAnyRole('ADMIN')")
+    @DeleteMapping("/groups/{id}")
+    public ResponseEntity<HttpStatus> deleteGroup(@PathVariable("id") long id) {
+    	System.out.println("entra"); 
+      try {
+    	  groupRepository.deleteById(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+      } catch (Exception e) {
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+      }
+    }
+	
+	
+	@PreAuthorize("hasAnyRole('ADMIN')")
+	@PostMapping("/groups")
+	public ResponseEntity<?> addGroupByAdmin(@Valid @RequestBody NewGroupRequest newGroupRequest) {
+		
+		List<Group> groups = new ArrayList<Group>();	
+		groups = groupRepository.findByDayofweekAndTimeofday(newGroupRequest.getDayofweek(), newGroupRequest.getTimeofday());
+				
+		System.out.println(groups);
+		
+		if ( groups.isEmpty()) { 
+			
+			Group group = new Group (newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getTimeofday(), newGroupRequest.getDayofweek(), newGroupRequest.isActived());
+			groupRepository.save(group);
+			return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));			
+			
+		}else {			
+			return ResponseEntity.badRequest().body(new MessageResponse("Error: Ya existe un grupo en ese día y ese turno"));
+		}
+		
+		
+	}
 	
 	
 }

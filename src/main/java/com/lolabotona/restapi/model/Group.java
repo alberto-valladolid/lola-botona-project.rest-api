@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 @Entity
 @Table(	name = "groups", 
 uniqueConstraints = { 
-	@UniqueConstraint(columnNames = {"day_of_week","time_of_day"})
+	@UniqueConstraint(columnNames = {"dayofweek","timeofday"})
 })
 
 public class Group {
@@ -36,7 +36,7 @@ public class Group {
     @OneToMany(mappedBy = "group")
     private Set<UserGroup> userSet;
 	
-    @NotBlank 
+
     private int capacity;
 	
     @NotBlank    
@@ -46,24 +46,24 @@ public class Group {
 //    private int orderShown;
 	
     @NotBlank    
-    private String time_of_day; //morning or afternoon. Es posible que no sea necesario 
+    private String timeofday; //morning or afternoon. Es posible que no sea necesario 
 
-    @NotBlank 
-    private int day_of_week;
+
+    private int dayofweek;
     
-    @NotBlank 
+
     private boolean active;
     
 	
 	public Group() {
 	}
 
-	public Group(int capacity, String description,/* int orderShown,*/ String time_of_day, int day_of_week,boolean active) {
+	public Group(int capacity, String description,/* int orderShown,*/ String timeofday, int dayofweek,boolean active) {
 		this.capacity = capacity;
 		this.description = description;
 		//this.orderShown = orderShown;
-		this.time_of_day = time_of_day;
-		this.day_of_week = day_of_week;
+		this.timeofday = timeofday;
+		this.dayofweek = dayofweek;
 		this.active = active; 	
 
 	}
@@ -110,20 +110,20 @@ public class Group {
 //		this.orderShown = orderShown;
 //	}
 	
-	public String getTimeOfDay() {
-		return time_of_day;
+	public String gettimeofday() {
+		return timeofday;
 	}
 	
-	public void setTimeOfDay(String time_of_day) {
-		this.time_of_day = time_of_day;
+	public void settimeofday(String timeofday) {
+		this.timeofday = timeofday;
 	}
 	
-	public int getDayOfWeek() {
-		return day_of_week;
+	public int getdayofweek() {
+		return dayofweek;
 	}
 
-	public void setDayOfWeek(int day_of_week) {
-		this.day_of_week = day_of_week;
+	public void setdayofweek(int dayofweek) {
+		this.dayofweek = dayofweek;
 	}
 	
 	
@@ -138,7 +138,7 @@ public class Group {
 
 	@Override
 	public String toString() {
-		return "Group [id=" + id + ", capacity=" + capacity + ", description=" + description + /*", orderShown=" + orderShown +*/ " , time_of_day=" + time_of_day +" , day_of_week=" + day_of_week +" , active=" + active + "]";
+		return "Group [id=" + id + ", capacity=" + capacity + ", description=" + description + /*", orderShown=" + orderShown +*/ " , timeofday=" + timeofday +" , dayofweek=" + dayofweek +" , active=" + active + "]";
 	}
 	
     @Override
