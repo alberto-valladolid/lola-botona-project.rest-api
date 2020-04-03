@@ -240,4 +240,49 @@ public class AdminController {
 	}
 	
 	
+	@PreAuthorize("hasAnyRole('ADMIN')")
+	@GetMapping("/groups/{id}")
+	public ResponseEntity<Group> getGroupById(@PathVariable("id") long id) {
+		Optional<Group> group = groupRepository.findById( id);
+		if (group.isPresent()) {
+			return new ResponseEntity<>(group.get(), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+	}
+	
+
+	@PreAuthorize("hasAnyRole('ADMIN')")
+    @PutMapping("/groups/{id}")
+    public ResponseEntity<?> updateGroup(@PathVariable("id") long id, @RequestBody Group newGroup) {
+		
+		List<Group> groups = new ArrayList<Group>();	
+		groups = groupRepository.findByDayofweekAndTimeofday(newGroup.getdayofweek(), newGroup.gettimeofday());
+					  
+		if ( groups.isEmpty()) { 
+			
+		      Optional<Group> storedGroupData = groupRepository.findById(id);		      
+		      
+		      if (storedGroupData.isPresent()) { 
+		    	  Group group = storedGroupData.get(); 		        
+		    	  group.setCapacity(newGroup.getCapacity());
+		    	  group.setDescription(newGroup.getDescription());  
+		    	  group.settimeofday(newGroup.gettimeofday());
+		    	  group.setdayofweek(newGroup.getdayofweek());
+		    	  group.setActive(newGroup.getActive());  
+                  return new ResponseEntity<>(groupRepository.save(group), HttpStatus.OK);                   
+		          
+		      } else {
+		          return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		      }	
+	  
+		}else {			
+			return ResponseEntity.badRequest().body(new MessageResponse("Error: Ya existe un grupo en ese día y ese turno"));
+		}
+              
+    } 
+	
+	
+	
+	
 }
