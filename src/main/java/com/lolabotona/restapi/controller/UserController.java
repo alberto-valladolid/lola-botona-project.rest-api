@@ -92,48 +92,4 @@ public class UserController {
 		
 	}	
 	
-	
-
-	
-	// @GetMapping("/group1")
-	// @PreAuthorize("(hasRole('USER')  or hasRole('ADMIN'))")
-	// public ResponseEntity<List<Group>> testGroups() {
-		
-	// 	  try {
-			   
-	// 	      List<Group> groups = new ArrayList<Group>();	 
-	// 	      groupRepository.findAll().forEach(groups::add);	
-	// 	      if (groups.isEmpty()) {
-	// 	        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-	// 	      }	
-		      
-	// 	      System.out.println("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"+groups);
-	// 	      return new ResponseEntity<>(groups, HttpStatus.OK);	
-		      
-	//        } catch (Exception e) {
-	// 	      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-	//        }
-	// }
-	
-	
-	
-	
-	// @GetMapping("/user1")
-	// @PreAuthorize("(hasRole('USER')  or hasRole('ADMIN'))")
-	// public ResponseEntity<List<User>> testUser() {
-	
-	// 	 try {
-			  
-	// 	      List<User> users = new ArrayList<User>();	 
-	// 	      userRepository.findAll().forEach(users::add);	
-	// 	      if (users.isEmpty()) {
-	// 	        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-	// 	      }	
-	// 	      return new ResponseEntity<>(users, HttpStatus.OK);	
-		      
-	//        } catch (Exception e) {
-	// 	      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-	//        }
-	// }
-	
 }
