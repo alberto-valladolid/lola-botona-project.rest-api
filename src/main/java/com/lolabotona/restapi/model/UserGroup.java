@@ -57,11 +57,12 @@ public class UserGroup implements Serializable {
     private Group group;
 	
 
- 
+	@Id
     @NotBlank    
+    @Column(length = 20)
     private String type; //recurrent, absencse or  retrieve 
     
-    @Column(name="retrieved", columnDefinition="tinyint(1) default 1")
+    @Column(name="retrieved", columnDefinition="tinyint(1) default 1",nullable = false)
     private boolean retrieved ; //only for  retrieve
     
     private Timestamp dateat; // for absencse or retrieve 
