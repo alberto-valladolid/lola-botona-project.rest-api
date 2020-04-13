@@ -258,28 +258,45 @@ public class AdminController {
 		
 		List<Group> groups = new ArrayList<Group>();	
 		groups = groupRepository.findByDayofweekAndTimeofday(newGroup.getdayofweek(), newGroup.gettimeofday());
-					  
-		if ( groups.isEmpty()) { 
+		
+		Optional<Group> storedGroupData = groupRepository.findById(id);	
+		
+		if(storedGroupData.isPresent()) {
 			
-		      Optional<Group> storedGroupData = groupRepository.findById(id);		      
-		      
-		      if (storedGroupData.isPresent()) { 
-		    	  Group group = storedGroupData.get(); 		        
-		    	  group.setCapacity(newGroup.getCapacity());
-		    	  group.setDescription(newGroup.getDescription());  
-		    	  group.settimeofday(newGroup.gettimeofday());
-		    	  group.setdayofweek(newGroup.getdayofweek());
-		    	  group.setActive(newGroup.getActive());  
-                  return new ResponseEntity<>(groupRepository.save(group), HttpStatus.OK);                   
-		          
-		      } else {
-		          return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		      }	
-	  
-		}else {			
-			return ResponseEntity.badRequest().body(new MessageResponse("Error: Ya existe un grupo en ese día y ese turno"));
+			if (storedGroupData.get().getdayofweek() == newGroup.getdayofweek()  &&    newGroup.gettimeofday().equals(storedGroupData.get().gettimeofday()) ) {
+				
+		    	Group group = storedGroupData.get(); 		        
+		    	group.setCapacity(newGroup.getCapacity());
+		    	group.setDescription(newGroup.getDescription());  
+		    	group.settimeofday(newGroup.gettimeofday());
+		    	group.setdayofweek(newGroup.getdayofweek());
+		    	group.setActive(newGroup.getActive());  
+	            return new ResponseEntity<>(groupRepository.save(group), HttpStatus.OK);                   
+			      
+			}else {
+				
+				if ( groups.isEmpty()) { 
+					
+			    	Group group = storedGroupData.get(); 		        
+			    	group.setCapacity(newGroup.getCapacity());
+			    	group.setDescription(newGroup.getDescription());  
+			    	group.settimeofday(newGroup.gettimeofday());
+			    	group.setdayofweek(newGroup.getdayofweek());
+			    	group.setActive(newGroup.getActive());  
+		            return new ResponseEntity<>(groupRepository.save(group), HttpStatus.OK); 
+		              
+				}else {	
+					
+					return ResponseEntity.badRequest().body(new MessageResponse("Error: Ya existe un grupo en ese día y ese turno"));
+					
+				}
+			}
+	
 		}
-              
+		else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+      
     } 
 	
 	
