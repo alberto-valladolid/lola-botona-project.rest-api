@@ -2,6 +2,7 @@ package com.lolabotona.restapi.model;
 
 import java.time.YearMonth;
 import java.util.Calendar;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -14,20 +15,23 @@ import lombok.Setter;
 @Setter
 public class CalendarDay {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private static final AtomicInteger count = new AtomicInteger(0); 
 	private int id; 
-	private int day; 	
+	private int monthDay; 	
+	private int weekDay; 
 	private boolean currentMonth; 
 	private CalendarEvent firstEvent; 
 	private CalendarEvent secondEvent; 
 	
 	
-	public CalendarDay(int day,boolean currentMonth, CalendarEvent firstEvent, CalendarEvent secondEvent) {
-		this.day = day; 
+	
+	public CalendarDay(int monthDay,boolean currentMonth, CalendarEvent firstEvent, CalendarEvent secondEvent,int weekDay) {
+		this.monthDay = monthDay; 
 		this.currentMonth = currentMonth; 
 		this.firstEvent = firstEvent; 
 		this.secondEvent = secondEvent; 
+		this.id = count.incrementAndGet(); 
+		this.weekDay = weekDay; 
 	}
 	
 	

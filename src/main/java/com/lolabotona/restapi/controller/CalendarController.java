@@ -98,7 +98,7 @@ public class CalendarController {
 	        	      
 	      	        try {
 	      	    	    
-	      	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), false, new CalendarEvent(),  new CalendarEvent())); 
+	      	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), false, new CalendarEvent(),  new CalendarEvent(), start.getDayOfWeek().getValue())); 
 	      	    	    
 	      	    	} catch(Exception e) { //this generic but you can control another types of exception
 	      	    	    // look the origin of excption 
@@ -158,6 +158,7 @@ public class CalendarController {
 		      	    	    Timestamp morningTimestamp = new java.sql.Timestamp(parsedDate1.getTime()); 
 		      	    	    morningEvent.setTimeOfDay(morningTimestamp);
 		      	    	    
+		      	    	    morningEvent.setDescription(morningGroup.get().getDescription());
 		      	    	    morningEvent.setUserAssits(this.userAssists(morningGroup.get(), morningTimestamp ));
 		      	    	    if(morningEvent.isUserAssits()) {
 		      	    	    	
@@ -178,8 +179,8 @@ public class CalendarController {
 		      				Date parsedDate2 = dateFormat.parse(c.get(Calendar.YEAR) + "-" + currMonthString +  "-" +start.getDayOfMonth()  +" 18:00");
 		      	    	    Timestamp afternoonTimestamp = new java.sql.Timestamp(parsedDate2.getTime()); 
 		      	    	    afternoonEvent.setTimeOfDay(afternoonTimestamp);
-		      	    	    
-		      	    	  afternoonEvent.setUserAssits(this.userAssists(afternoonGroup.get(), afternoonTimestamp ));
+		      	    	    afternoonEvent.setDescription(afternoonGroup.get().getDescription());
+		      	    	    afternoonEvent.setUserAssits(this.userAssists(afternoonGroup.get(), afternoonTimestamp ));
 		      	    	    if(afternoonEvent.isUserAssits()) {
 		      	    	    	
 		      	    	    	afternoonEvent.setFull(this.eventIsFull(afternoonGroup.get(), afternoonTimestamp));
@@ -188,7 +189,7 @@ public class CalendarController {
 		      				
 		      			} 
 		      
-	      	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), true, morningEvent, afternoonEvent)); 
+	      	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), true, morningEvent, afternoonEvent, start.getDayOfWeek().getValue())); 
 	      	    	    
 	      	    	} catch(Exception e) { //this generic but you can control another types of exception
 	      	    	    // look the origin of excption 
@@ -231,7 +232,7 @@ public class CalendarController {
         		  System.out.println(start.getDayOfMonth());
 	        	      
 	      	        try {
-	      	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), false, new CalendarEvent(),  new CalendarEvent())); 
+	      	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), false, new CalendarEvent(),  new CalendarEvent(), start.getDayOfWeek().getValue())); 
 	      	    	    
 	      	    	} catch(Exception e) { //this generic but you can control another types of exception
 	      	    	    // look the origin of excption 
