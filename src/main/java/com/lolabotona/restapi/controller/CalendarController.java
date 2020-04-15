@@ -260,7 +260,7 @@ public class CalendarController {
 		Optional<User> user = userRepository.findById( userDetailsImpl.getId());
 
 		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user.get(), group, "recurrent");
-		Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(), group, "absencse", dateAt);
+		Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(), group, "absence", dateAt);
 		Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(), group, "retrieve", dateAt);
 		
 		if (recurrentUserGroup.isPresent() && !abcenseUserGroup.isPresent() || retrieveUserGroup.isPresent() ) {
@@ -278,9 +278,10 @@ public class CalendarController {
 		Optional<User> user = userRepository.findById( userDetailsImpl.getId());
 		
 		List<UserGroup> recurrentUserGroup = userGroupRepository.findByGroupAndType( group, "recurrent");
-		List<UserGroup> abcenseUserGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "absencse", dateAt);
+		List<UserGroup> abcenseUserGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "absence", dateAt);
 		List<UserGroup> retrieveUserGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "retrieve", dateAt);
 		
+	
 
 		if ((recurrentUserGroup.size() -    abcenseUserGroup.size() +  retrieveUserGroup.size() ) < group.getCapacity() ) {
  			return false; 
