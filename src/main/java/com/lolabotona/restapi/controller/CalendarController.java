@@ -157,12 +157,14 @@ public class CalendarController {
 		      	    	    Date parsedDate1 = dateFormat.parse(c.get(Calendar.YEAR) + "-" + currMonthString +  "-" +start.getDayOfMonth()  +" 12:00");
 		      	    	    Timestamp morningTimestamp = new java.sql.Timestamp(parsedDate1.getTime()); 
 		      	    	    morningEvent.setTimeOfDay(morningTimestamp);
+		      	    	    morningEvent.setGroupId(morningGroup.get().getId());
 		      	    	    
 		      	    	    morningEvent.setDescription(morningGroup.get().getDescription());
 		      	    	    morningEvent.setUserAssits(this.userAssists(morningGroup.get(), morningTimestamp ));
-		      	    	    if(morningEvent.isUserAssits()) {
+		      	    	    if(!morningEvent.isUserAssits()) {
 		      	    	    	
 		      	    	    	morningEvent.setFull(this.eventIsFull(morningGroup.get(), morningTimestamp));
+		      	    	    	
 		      	    	    	
 		      	    	    }
 		      				
@@ -179,9 +181,10 @@ public class CalendarController {
 		      				Date parsedDate2 = dateFormat.parse(c.get(Calendar.YEAR) + "-" + currMonthString +  "-" +start.getDayOfMonth()  +" 18:00");
 		      	    	    Timestamp afternoonTimestamp = new java.sql.Timestamp(parsedDate2.getTime()); 
 		      	    	    afternoonEvent.setTimeOfDay(afternoonTimestamp);
+		      	    	    afternoonEvent.setGroupId(afternoonGroup.get().getId());
 		      	    	    afternoonEvent.setDescription(afternoonGroup.get().getDescription());
 		      	    	    afternoonEvent.setUserAssits(this.userAssists(afternoonGroup.get(), afternoonTimestamp ));
-		      	    	    if(afternoonEvent.isUserAssits()) {
+		      	    	    if(!afternoonEvent.isUserAssits()) {
 		      	    	    	
 		      	    	    	afternoonEvent.setFull(this.eventIsFull(afternoonGroup.get(), afternoonTimestamp));
 		      	    	    	
@@ -278,7 +281,8 @@ public class CalendarController {
 		List<UserGroup> abcenseUserGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "absencse", dateAt);
 		List<UserGroup> retrieveUserGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "retrieve", dateAt);
 		
-		if ((recurrentUserGroup.size()  +    abcenseUserGroup.size() -  retrieveUserGroup.size() ) < group.getCapacity() ) {
+
+		if ((recurrentUserGroup.size() -    abcenseUserGroup.size() +  retrieveUserGroup.size() ) < group.getCapacity() ) {
  			return false; 
 		}else {
 			return true; 
