@@ -15,8 +15,7 @@ import lombok.Setter;
 @Setter
 public class CalendarDay {
 
-	private static final AtomicInteger count = new AtomicInteger(0); 
-	private int id; 
+
 	private int monthDay; 	
 	private int weekDay; 
 	private boolean currentMonth; 
@@ -25,12 +24,11 @@ public class CalendarDay {
 	
 	
 	
-	public CalendarDay(int monthDay,boolean currentMonth, CalendarEvent firstEvent, CalendarEvent secondEvent,int weekDay) {
+	public CalendarDay(int monthDay,boolean currentMonth,  CalendarEvent firstEvent, CalendarEvent secondEvent,int weekDay) {
 		this.monthDay = monthDay; 
 		this.currentMonth = currentMonth; 
 		this.firstEvent = firstEvent; 
 		this.secondEvent = secondEvent; 
-		this.id = count.incrementAndGet(); 
 		this.weekDay = weekDay; 
 	}
 	
