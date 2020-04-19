@@ -11,13 +11,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,12 +31,15 @@ import com.lolabotona.restapi.model.CalendarDay;
 import com.lolabotona.restapi.model.CalendarEvent;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.model.UserGroup;
+import com.lolabotona.restapi.payload.request.ChgPwRequest;
+import com.lolabotona.restapi.payload.request.NewRetrieveRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
 import com.lolabotona.restapi.model.Group;
 import com.lolabotona.restapi.repository.GroupRepository;
 import com.lolabotona.restapi.repository.UserGroupRepository;
 import com.lolabotona.restapi.repository.UserRepository;
 import com.lolabotona.restapi.service.UserDetailsImpl;
+import com.lolabotona.restapi.service.UserGroupService;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -47,10 +56,13 @@ public class CalendarController {
     
     @Autowired 
 	private GroupRepository groupRepository; 
-    
+    	
+	@Autowired 
+	private UserGroupService userGroupService; 
+	
 
 	@PreAuthorize("(hasAnyRole('USER') or hasRole('ADMIN'))")
-	@GetMapping("/calendardata")
+	@GetMapping("calendar/calendardata")
     public ResponseEntity<List<CalendarDay>> getCalendarData() {
 	  try {
 		  
@@ -142,7 +154,7 @@ public class CalendarController {
       		  System.out.println(start.getDayOfMonth());
 	        	      
 	      	        try {
-	      	    	    
+//	      	    	    
 	      	        	int dayOfWeek =  (start.getDayOfWeek().getValue() % 7) +1 ; 
 	      	        	
 	      	        	CalendarEvent morningEvent = new CalendarEvent();
@@ -160,16 +172,15 @@ public class CalendarController {
 		      	    	    morningEvent.setGroupId(morningGroup.get().getId());
 		      	    	    
 		      	    	    morningEvent.setDescription(morningGroup.get().getDescription());
-		      	    	    morningEvent.setUserAssits(this.userAssists(morningGroup.get(), morningTimestamp ));
+		      	    	    morningEvent.setUserAssits(userGroupService.userAssists(morningGroup.get(), morningTimestamp ));
 		      	    	    if(!morningEvent.isUserAssits()) {
 		      	    	    	
-		      	    	    	morningEvent.setFull(this.eventIsFull(morningGroup.get(), morningTimestamp));
+		      	    	    	morningEvent.setFull(userGroupService.eventIsFull(morningGroup.get(), morningTimestamp));
 		      	    	    	
 		      	    	    	
 		      	    	    }
 		      				
 		      			} 
-		      			
 		      			
 		      			
 		      		    //find  afternoon groups 
@@ -183,10 +194,10 @@ public class CalendarController {
 		      	    	    afternoonEvent.setTimeOfDay(afternoonTimestamp);
 		      	    	    afternoonEvent.setGroupId(afternoonGroup.get().getId());
 		      	    	    afternoonEvent.setDescription(afternoonGroup.get().getDescription());
-		      	    	    afternoonEvent.setUserAssits(this.userAssists(afternoonGroup.get(), afternoonTimestamp ));
+		      	    	    afternoonEvent.setUserAssits(userGroupService.userAssists(afternoonGroup.get(), afternoonTimestamp ));
 		      	    	    if(!afternoonEvent.isUserAssits()) {
 		      	    	    	
-		      	    	    	afternoonEvent.setFull(this.eventIsFull(afternoonGroup.get(), afternoonTimestamp));
+		      	    	    	afternoonEvent.setFull(userGroupService.eventIsFull(afternoonGroup.get(), afternoonTimestamp));
 		      	    	    	
 		      	    	    }
 		      				
@@ -254,45 +265,73 @@ public class CalendarController {
      }
 	
 	
-    public boolean userAssists(  Group group,  Timestamp dateAt ) {    	
-    	
-		UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
-		Optional<User> user = userRepository.findById( userDetailsImpl.getId());
-
-		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user.get(), group, "recurrent");
-		Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(), group, "absence", dateAt);
-		Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(), group, "retrieve", dateAt);
+	@PreAuthorize("(hasAnyRole('USER') or hasRole('ADMIN')) ")
+	@PostMapping("calendar/createRetrieve")
+	public ResponseEntity<?> changePassword(@Valid @RequestBody NewRetrieveRequest rewRetrieveRequest, Authentication authentication) {
 		
-		if (recurrentUserGroup.isPresent() && !abcenseUserGroup.isPresent() || retrieveUserGroup.isPresent() ) {
- 			return true; 
+		Date today = new Date();
+		
+		if(rewRetrieveRequest.getDate().after(today)) {
+			if(userGroupService.getPendingRecieveCount() > 0) {
+				
+				Optional<Group> group = groupRepository.findById(rewRetrieveRequest.getGroupid());				
+				
+				if (group.isPresent()) {
+					
+					if (userGroupService.userAssists(group.get(), rewRetrieveRequest.getDate())) {
+						return ResponseEntity
+								.badRequest()
+								.body(new MessageResponse("Error: El usuario ya está asiste a ese evento "));
+					}else {
+						
+						if (userGroupService.eventIsFull(group.get(), rewRetrieveRequest.getDate())) {
+							return ResponseEntity
+									.badRequest()
+									.body(new MessageResponse("Error: El grupo está completo "));
+						}else {
+							
+							//Group group = new Group (newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getTimeofday(), newGroupRequest.getDayofweek(), newGroupRequest.isActived());
+							
+							UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
+							Optional<User> user = userRepository.findById( userDetailsImpl.getId());
+							
+							UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "retrieve", true, rewRetrieveRequest.getDate()); 
+					
+							userGroupRepository.save(newUserGroup);
+							
+							//restar un retrieveCount
+							
+							userGroupService.decreasePendingRecieveCount(user.get());							
+							
+							return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));
+							
+						}
+						
+					}
+					
+				} else {
+					return ResponseEntity
+							.badRequest()
+							.body(new MessageResponse("Error: Grupo no encontrado"));
+				}
+								
+			}else {
+				return ResponseEntity
+						.badRequest()
+						.body(new MessageResponse("No dispone de clases pendientes"));
+			}
+			
+			
 		}else {
-			return false; 
+			  return ResponseEntity
+						.badRequest()
+						.body(new MessageResponse("Error: No se pueden crear asistencias en fechas pasadas"));
 		}
-	
-    }
-    
-    
-    public boolean eventIsFull(  Group group,  Timestamp dateAt ) {    	
-    	
-		UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
-		Optional<User> user = userRepository.findById( userDetailsImpl.getId());
 		
-		List<UserGroup> recurrentUserGroup = userGroupRepository.findByGroupAndType( group, "recurrent");
-		List<UserGroup> abcenseUserGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "absence", dateAt);
-		List<UserGroup> retrieveUserGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "retrieve", dateAt);
+		 
 		
+	}
 	
-
-		if ((recurrentUserGroup.size() -    abcenseUserGroup.size() +  retrieveUserGroup.size() ) < group.getCapacity() ) {
- 			return false; 
-		}else {
-			return true; 
-		}
-	
-    }
-    
-	
-	
-	
+		
 	
 }

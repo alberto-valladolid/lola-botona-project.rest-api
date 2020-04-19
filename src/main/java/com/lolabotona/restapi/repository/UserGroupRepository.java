@@ -1,10 +1,15 @@
 package com.lolabotona.restapi.repository;
 
+import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
 
+import javax.transaction.Transactional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import com.lolabotona.restapi.model.Group;
@@ -26,4 +31,9 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, Long> {
 	
 	List<UserGroup> findByGroupAndType( Group group, String type );
 	List<UserGroup> findByGroupAndTypeAndDateat( Group group, String type,Timestamp dateAt );
+		
+	int countByTypeAndUserAndRetrievedAndDateatBetween(String type,User user,boolean retrieve,Timestamp start,Timestamp end );	 
+	Optional<UserGroup> findTop1ByTypeAndUserAndRetrievedAndDateatBetweenOrderByDateat(String type,User user,boolean retrieve,Timestamp start,Timestamp end );
+
+	
 }
