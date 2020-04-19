@@ -32,7 +32,7 @@ import com.lolabotona.restapi.model.CalendarEvent;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.model.UserGroup;
 import com.lolabotona.restapi.payload.request.ChgPwRequest;
-import com.lolabotona.restapi.payload.request.NewRetrieveRequest;
+import com.lolabotona.restapi.payload.request.NewCalendarRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
 import com.lolabotona.restapi.model.Group;
 import com.lolabotona.restapi.repository.GroupRepository;
@@ -267,7 +267,7 @@ public class CalendarController {
 	
 	@PreAuthorize("(hasAnyRole('USER') or hasRole('ADMIN')) ")
 	@PostMapping("calendar/createRetrieve")
-	public ResponseEntity<?> changePassword(@Valid @RequestBody NewRetrieveRequest rewRetrieveRequest, Authentication authentication) {
+	public ResponseEntity<?> createRetrieve(@Valid @RequestBody NewCalendarRequest rewRetrieveRequest, Authentication authentication) {
 		
 		Date today = new Date();
 		
@@ -298,9 +298,7 @@ public class CalendarController {
 							UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "retrieve", true, rewRetrieveRequest.getDate()); 
 					
 							userGroupRepository.save(newUserGroup);
-							
-							//restar un retrieveCount
-							
+			
 							userGroupService.decreasePendingRecieveCount(user.get());							
 							
 							return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));
@@ -327,6 +325,59 @@ public class CalendarController {
 						.badRequest()
 						.body(new MessageResponse("Error: No se pueden crear asistencias en fechas pasadas"));
 		}
+		
+		 
+		
+	}
+	
+	
+	@PreAuthorize("(hasAnyRole('USER') or hasRole('ADMIN')) ")
+	@PostMapping("calendar/createAbsence")
+	public ResponseEntity<?> createAbsence(@Valid @RequestBody NewCalendarRequest rewRetrieveRequest, Authentication authentication) {
+		
+		Date today = new Date();
+		
+		if(rewRetrieveRequest.getDate().after(today)) {
+				
+			Optional<Group> group = groupRepository.findById(rewRetrieveRequest.getGroupid());				
+			
+			if (group.isPresent()) {
+				
+				if (userGroupService.userAssists(group.get(), rewRetrieveRequest.getDate())) {
+					
+					//REVISAR SI EL USUARIO ASISTE AL EVENTO POR UN RETRIEVE O POR UN RECURRENT
+					
+					UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
+					Optional<User> user = userRepository.findById( userDetailsImpl.getId());
+					
+					UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "absence", false, rewRetrieveRequest.getDate()); 
+			
+					userGroupRepository.save(newUserGroup);
+						
+					return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));
+						
+				
+				}else {
+					return ResponseEntity
+							.badRequest()
+							.body(new MessageResponse("Error: No se puede crear la ausencia, el usuario no asiste a clase ese día "  ));
+				}
+				
+			} else {
+				return ResponseEntity
+						.badRequest()
+						.body(new MessageResponse("Error: Grupo no encontrado"));
+			}
+							
+	
+			
+			
+		}else {
+			  return ResponseEntity
+						.badRequest()
+						.body(new MessageResponse("Error: No se pueden crear asistencias en fechas pasadas"));
+		}
+
 		
 		 
 		

@@ -11,7 +11,7 @@ import lombok.Setter;
 @Getter
 @Setter
 
-public class NewRetrieveRequest {
+public class NewCalendarRequest {
 
     @NotNull  
     private Timestamp date; 
