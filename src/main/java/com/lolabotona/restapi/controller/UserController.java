@@ -1,12 +1,10 @@
 package com.lolabotona.restapi.controller;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.validation.Valid;
-
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,12 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.lolabotona.restapi.repository.UserRepository;
-import com.lolabotona.restapi.repository.GroupRepository;
-import com.lolabotona.restapi.repository.UserGroupRepository;
 import com.lolabotona.restapi.service.UserDetailsImpl;
-import com.lolabotona.restapi.model.Group;
+import com.lolabotona.restapi.service.UserGroupService;
 import com.lolabotona.restapi.model.User;
-import com.lolabotona.restapi.model.UserGroup;
 import com.lolabotona.restapi.payload.request.ChgPwRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
 
@@ -40,12 +35,12 @@ public class UserController {
 	@Autowired 
 	private UserRepository userRepository; 
 	
-	@Autowired 
-	private UserGroupRepository userGroupRepository; 
-	
 	
 	@Autowired 
-	private GroupRepository groupRepository; 
+	private UserGroupService userGroupService; 
+	
+
+	
 	
 	@Autowired
 	private PasswordEncoder passwordEncoder; 
@@ -74,7 +69,7 @@ public class UserController {
 	@PreAuthorize("(hasAnyRole('USER') or hasRole('ADMIN')) ")
 	@PutMapping("/users/password")
 	public ResponseEntity<?> changePassword(@Valid @RequestBody ChgPwRequest chgPwRequest, Authentication authentication) {
-		
+		 
 		UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		
 		Optional<User> user = userRepository.findById( userDetailsImpl.getId());
@@ -91,5 +86,17 @@ public class UserController {
 		
 		
 	}	
+	
+	@GetMapping("/users/pending-retrieves")
+	@PreAuthorize("(hasRole('USER')  or hasRole('ADMIN'))")
+	public   Map<String, Integer> getUserPendingRetrieveCount( Authentication authentication) {				
+		
+		int userPendingRetrieveCount = userGroupService.getPendingRecieveCount();	
+		
+		return Collections.singletonMap("count", userPendingRetrieveCount );
+
+		
+	}
+	
 	
 }
