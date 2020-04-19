@@ -3,6 +3,8 @@ package com.lolabotona.restapi.model;
 import java.io.Serializable;
 import java.util.Objects;
 
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.validation.constraints.Size;
 
 
@@ -12,35 +14,20 @@ public class UserGroupKey implements Serializable{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private Long user;
-	private Long group;
-    @Size(min = 6, max = 40)
-	private String type;
+	
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+
+
+	public Long getId() {
+		return id;
+	}
+	
+	public void setId(Long id) {
+		this.id = id;
+	}
 	
 
-	public Long getUserId() {
-		return user;
-	}
-	
-	public void setUserId(Long id) {
-		this.user = id;
-	}
-	
-	public Long getGroupId() {
-		return group;
-	}
-	
-	public void setGroupId(Long id) {
-		this.group = id;
-	}
-	
-	public String getType() {
-		return type;
-	}
-	
-	public void setType(String type) {
-		this.type = type;
-	}
 	
 	
 	
@@ -52,21 +39,19 @@ public class UserGroupKey implements Serializable{
             return false;
 
         UserGroupKey that = (UserGroupKey) o;
-        return Objects.equals(user, that.user) && 
-               Objects.equals(group, that.group)&& 
-               Objects.equals(type, that.type);
+        return Objects.equals(id, that.id) ;
     }
 
     @Override   
     public int hashCode() {
-        return Objects.hash(user, group);
+        return Objects.hash( id);
     }
     
     
 
     @Override
     public String toString() {
-        return "ProfesormoduloId [userid=" + user + ", groupid=" + group + ", type="+ type +"]";
+        return "ProfesormoduloId [id=" + id + "]";
     }
     
 	

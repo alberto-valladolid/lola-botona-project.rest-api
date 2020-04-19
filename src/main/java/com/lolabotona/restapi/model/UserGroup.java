@@ -8,6 +8,8 @@ import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
@@ -41,28 +43,44 @@ public class UserGroup implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	
-	
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id; 
+	
 	@JsonBackReference(value="user")
-	@Id
     @ManyToOne
     @JoinColumn(name = "userid", referencedColumnName = "id")
     private User user;
 
 	@JsonBackReference(value="group")
-    @Id
     @ManyToOne
     @JoinColumn(name = "groupid", referencedColumnName = "id")
     private Group group;
-	
-
-	@Id
-    @NotBlank    
+  
     @Column(length = 20)
     private String type; //recurrent, absence or  retrieve 
+	
+	
+	
+
+//	@JsonBackReference(value="user")
+//	@Id
+//    @ManyToOne
+//    @JoinColumn(name = "userid", referencedColumnName = "id")
+//    private User user;
+//
+//	@JsonBackReference(value="group")
+//    @Id
+//    @ManyToOne
+//    @JoinColumn(name = "groupid", referencedColumnName = "id")
+//    private Group group;
+//	@Id
+//    @NotBlank    
+//    @Column(length = 20)
+//    private String type; //recurrent, absence or  retrieve 
     
-    @Column(name="retrieved", columnDefinition="tinyint(1) default 1",nullable = false)
+    @Column(name="retrieved", columnDefinition="tinyint(1) default 0",nullable = false)
     private boolean retrieved ; //only for  retrieve
     
     private Timestamp dateat; // for absence or retrieve 
@@ -92,19 +110,18 @@ public class UserGroup implements Serializable {
         if (this == o) return true;
         if (!(o instanceof UserGroup)) return false;
         UserGroup that = (UserGroup) o;
-        return Objects.equals(user, that.user) &&
-                Objects.equals(group, that.group) ;
+        return Objects.equals(id, that.id)  ;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(user.getName(), group.getId(), type);
+        return Objects.hash(id);
     }
     
     
     @Override
     public String toString() {
-    	return "UserGroup [user=" + user + ", group=" + group + ", type=" + type + ", retrieved=" + retrieved + " , dateat=" + dateat + "]";
+    	return "UserGroup [id=" + id + ",user=" + user + ", group=" + group + ", type=" + type + ", retrieved=" + retrieved + " , dateat=" + dateat + "]";
     }
 
 
