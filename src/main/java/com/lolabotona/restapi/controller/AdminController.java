@@ -206,8 +206,7 @@ public class AdminController {
 	
 	@PreAuthorize("hasAnyRole('ADMIN')")
     @DeleteMapping("/groups/{id}")
-    public ResponseEntity<HttpStatus> deleteGroup(@PathVariable("id") long id) {
-    	System.out.println("entra"); 
+    public ResponseEntity<HttpStatus> deleteGroup(@PathVariable("id") long id) {    
       try {
     	  groupRepository.deleteById(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

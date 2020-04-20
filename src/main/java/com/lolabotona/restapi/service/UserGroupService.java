@@ -37,12 +37,16 @@ public class UserGroupService  {
 		UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Optional<User> user = userRepository.findById( userDetailsImpl.getId());
 		
-		Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
+		//Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
+		Calendar currentCalendar = Calendar.getInstance();
+		currentCalendar.add(Calendar.MONTH, +2);
+		Timestamp currentTimestamp = new Timestamp(currentCalendar.getTimeInMillis());	
+		
 		Calendar aMonthAgoCalendar = Calendar.getInstance();
 		aMonthAgoCalendar.add(Calendar.MONTH, -1);
 		Timestamp aMonthAgoTimestamp = new Timestamp(aMonthAgoCalendar.getTimeInMillis());	
-		
 	
+
 		return userGroupRepository.countByTypeAndUserAndRetrievedAndDateatBetween("absence", user.get(), false, aMonthAgoTimestamp , currentTimestamp); 
 		
 	}
@@ -82,25 +86,35 @@ public class UserGroupService  {
 	
     }
     
-    public void decreasePendingRecieveCount(User user) {
+    public long decreasePendingRecieveCount(User user) {
     	
-		Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
+		//Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
+		Calendar currentCalendar = Calendar.getInstance();
+		currentCalendar.add(Calendar.MONTH, +2);
+		Timestamp currentTimestamp = new Timestamp(currentCalendar.getTimeInMillis());	
+		
+		
 		Calendar aMonthAgoCalendar = Calendar.getInstance();
 		aMonthAgoCalendar.add(Calendar.MONTH, -1);
 		Timestamp aMonthAgoTimestamp = new Timestamp(aMonthAgoCalendar.getTimeInMillis());			
     	
 		Optional<UserGroup> userGroup = userGroupRepository.findTop1ByTypeAndUserAndRetrievedAndDateatBetweenOrderByDateat("absence", user, false, aMonthAgoTimestamp, currentTimestamp);
 
-		if (userGroup.isPresent()) {			
+		if (userGroup.isPresent()) {
 			
+			System.out.println(userGroup.get().getId());
 			UserGroup currUserGroup  = userGroup.get(); 
 			currUserGroup.setRetrieved(true);
 			userGroupRepository.save(currUserGroup); 			
 			
-		
 		} 
+		
+		return userGroup.get().getId(); 
     	
     }
+    
+    
+
 	
 	
 }

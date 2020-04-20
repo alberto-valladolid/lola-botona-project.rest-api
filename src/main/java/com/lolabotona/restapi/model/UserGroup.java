@@ -32,10 +32,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@IdClass(UserGroupKey.class)
+
 public class UserGroup implements Serializable {
 	
-
 
 
 	/**
@@ -61,8 +60,6 @@ public class UserGroup implements Serializable {
     @Column(length = 20)
     private String type; //recurrent, absence or  retrieve 
 	
-	
-	
 
 //	@JsonBackReference(value="user")
 //	@Id
@@ -85,17 +82,19 @@ public class UserGroup implements Serializable {
     
     private Timestamp dateat; // for absence or retrieve 
     
+    private Long absenceid; 
     
-    public UserGroup(User user, Group group,String type,boolean retrieved,Timestamp dateat) {
+    public UserGroup(User user, Group group,String type,boolean retrieved,Timestamp dateat, Long absenceid) {
     	
         this.user = user;
         this.group = group;
         this.type = type;
         this.retrieved = retrieved;
         this.dateat = dateat;
+        this.absenceid = absenceid;
         
     }
-    
+        
 	public long getuserid() {	
 		return user.getId();
 	}
@@ -121,7 +120,7 @@ public class UserGroup implements Serializable {
     
     @Override
     public String toString() {
-    	return "UserGroup [id=" + id + ",user=" + user + ", group=" + group + ", type=" + type + ", retrieved=" + retrieved + " , dateat=" + dateat + "]";
+    	return "UserGroup [id=" + id + ",user=" + user + ", group=" + group + ", type=" + type + ", retrieved=" + retrieved + " , dateat=" + dateat + " , absenceid=" + absenceid + "]";
     }
 
 

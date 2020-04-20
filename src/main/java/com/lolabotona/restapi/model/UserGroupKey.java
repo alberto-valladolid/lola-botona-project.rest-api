@@ -3,19 +3,17 @@ package com.lolabotona.restapi.model;
 import java.io.Serializable;
 import java.util.Objects;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.validation.constraints.Size;
+
 
 
 public class UserGroupKey implements Serializable{
 
 	/**
-	 * 
+	 * No se usa, la borraré en un futuro
 	 */
 	private static final long serialVersionUID = 1L;
 	
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
 	private Long id;
 
 
@@ -26,10 +24,6 @@ public class UserGroupKey implements Serializable{
 	public void setId(Long id) {
 		this.id = id;
 	}
-	
-
-	
-	
 	
     @Override
     public boolean equals(Object o) {
@@ -46,8 +40,6 @@ public class UserGroupKey implements Serializable{
     public int hashCode() {
         return Objects.hash( id);
     }
-    
-    
 
     @Override
     public String toString() {

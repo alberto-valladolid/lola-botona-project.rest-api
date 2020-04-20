@@ -295,11 +295,14 @@ public class CalendarController {
 							UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
 							Optional<User> user = userRepository.findById( userDetailsImpl.getId());
 							
-							UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "retrieve", true, rewRetrieveRequest.getDate()); 
-					
+						    long absenceId = userGroupService.decreasePendingRecieveCount(user.get());							
+							
+							
+							UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "retrieve", true, rewRetrieveRequest.getDate(), absenceId); 
+							
+							System.out.println("AUSENCIA" + newUserGroup);
+							
 							userGroupRepository.save(newUserGroup);
-			
-							userGroupService.decreasePendingRecieveCount(user.get());							
 							
 							return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));
 							
@@ -345,16 +348,49 @@ public class CalendarController {
 				
 				if (userGroupService.userAssists(group.get(), rewRetrieveRequest.getDate())) {
 					
-					//REVISAR SI EL USUARIO ASISTE AL EVENTO POR UN RETRIEVE O POR UN RECURRENT
-					
 					UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
 					Optional<User> user = userRepository.findById( userDetailsImpl.getId());
 					
-					UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "absence", false, rewRetrieveRequest.getDate()); 
-			
-					userGroupRepository.save(newUserGroup);
+					Optional<UserGroup> existRetrieve = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(), group.get(), "retrieve", rewRetrieveRequest.getDate());
+
+					
+					if(existRetrieve.isPresent()) {
 						
-					return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));
+				        try {
+				        
+				        	userGroupRepository.deleteById(existRetrieve.get().getId());
+				        	
+				     
+				        	
+				        	Optional<UserGroup> absenceGroup = userGroupRepository.findById(existRetrieve.get().getAbsenceid());
+				        	
+				        	System.out.println( "wwwwwwwww"+absenceGroup);
+				        	
+				    		if (absenceGroup.isPresent()) {
+				    			
+				    			System.out.println(absenceGroup.get());
+				    			UserGroup currUserGroup  = absenceGroup.get(); 
+				    			currUserGroup.setRetrieved(false);
+				    			userGroupRepository.save(currUserGroup); 			
+				    			
+				    		} 
+	
+				        	
+				        } catch (Exception e) {
+				        	return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+				        }
+				  		
+					}else {
+						
+						UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "absence", false, rewRetrieveRequest.getDate(),null); 			
+						System.out.println(newUserGroup);
+						userGroupRepository.save(newUserGroup);
+						
+					}
+					
+					
+					return ResponseEntity.ok(new MessageResponse("Ausencia creada con éxito!"));
+					
 						
 				
 				}else {
