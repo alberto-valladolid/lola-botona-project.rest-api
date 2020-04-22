@@ -169,10 +169,11 @@ public class CalendarController {
 		      	    	    Date parsedDate1 = dateFormat.parse(c.get(Calendar.YEAR) + "-" + currMonthString +  "-" +start.getDayOfMonth()  +" 12:00");
 		      	    	    Timestamp morningTimestamp = new java.sql.Timestamp(parsedDate1.getTime()); 
 		      	    	    morningEvent.setTimeOfDay(morningTimestamp);
-		      	    	    morningEvent.setGroupId(morningGroup.get().getId());
-		      	    	    
+		      	    	    morningEvent.setGroupId(morningGroup.get().getId());		      	    	    
 		      	    	    morningEvent.setDescription(morningGroup.get().getDescription());
-		      	    	    morningEvent.setUserAssits(userGroupService.userAssists(morningGroup.get(), morningTimestamp ));
+		      	    	    morningEvent.setUserAssits(userGroupService.userAssists(morningGroup.get(), morningTimestamp ));		      	    	    
+		      	    	    morningEvent.setUsers(userGroupService.getUserAndCapacity(morningGroup.get(), morningTimestamp));
+		      	    	    
 		      	    	    if(!morningEvent.isUserAssits()) {
 		      	    	    	
 		      	    	    	morningEvent.setFull(userGroupService.eventIsFull(morningGroup.get(), morningTimestamp));
@@ -194,7 +195,8 @@ public class CalendarController {
 		      	    	    afternoonEvent.setTimeOfDay(afternoonTimestamp);
 		      	    	    afternoonEvent.setGroupId(afternoonGroup.get().getId());
 		      	    	    afternoonEvent.setDescription(afternoonGroup.get().getDescription());
-		      	    	    afternoonEvent.setUserAssits(userGroupService.userAssists(afternoonGroup.get(), afternoonTimestamp ));
+		      	    	    afternoonEvent.setUserAssits(userGroupService.userAssists(afternoonGroup.get(), afternoonTimestamp ));	
+		      	    	    afternoonEvent.setUsers(userGroupService.getUserAndCapacity(afternoonGroup.get(), afternoonTimestamp));
 		      	    	    if(!afternoonEvent.isUserAssits()) {
 		      	    	    	
 		      	    	    	afternoonEvent.setFull(userGroupService.eventIsFull(afternoonGroup.get(), afternoonTimestamp));

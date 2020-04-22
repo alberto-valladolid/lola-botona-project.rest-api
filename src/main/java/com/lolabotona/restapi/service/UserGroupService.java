@@ -86,6 +86,23 @@ public class UserGroupService  {
 	
     }
     
+    
+    public String getUserAndCapacity(  Group group,  Timestamp dateAt ) {   
+	
+		
+		List<UserGroup> recurrentUserGroup = userGroupRepository.findByGroupAndType( group, "recurrent");
+		List<UserGroup> abcenseUserGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "absence", dateAt);
+		List<UserGroup> retrieveUserGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "retrieve", dateAt);
+	
+
+		return recurrentUserGroup.size() -    abcenseUserGroup.size() +  retrieveUserGroup.size() +"/" + group.getCapacity(); 
+		
+
+	
+    }
+    
+    
+    
     public long decreasePendingRecieveCount(User user) {
     	
 		//Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
