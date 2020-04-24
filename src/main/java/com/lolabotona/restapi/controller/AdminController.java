@@ -2,11 +2,14 @@ package com.lolabotona.restapi.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lolabotona.restapi.model.FeastDay;
 import com.lolabotona.restapi.model.Group;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.payload.request.SignupRequest;
+import com.lolabotona.restapi.payload.request.NewFeastDayRequest;
 import com.lolabotona.restapi.payload.request.NewGroupRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
+import com.lolabotona.restapi.repository.FeastDayRepository;
 import com.lolabotona.restapi.repository.GroupRepository;
 import com.lolabotona.restapi.repository.UserRepository;
 
@@ -49,6 +52,9 @@ import org.springframework.http.ResponseEntity;
 @RestController
 @RequestMapping("/api/secure")
 public class AdminController {
+	
+	@Autowired 
+	private FeastDayRepository feastDayRepository; 
 
 	@Autowired 
 	private UserRepository userRepository; 
@@ -299,6 +305,53 @@ public class AdminController {
     } 
 	
 	
+	
+	@PreAuthorize("hasAnyRole('ADMIN')")
+	@GetMapping("/feast-days")
+    public ResponseEntity<List<FeastDay>> getAllFeastDays() {
+	  try {
+		  
+	      List<FeastDay> feastDays = new ArrayList<FeastDay>();	 
+	      feastDayRepository.findAll().forEach(feastDays::add);	
+	      if (feastDays.isEmpty()) {
+	        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	      }		      
+	      
+	      return new ResponseEntity<>(feastDays, HttpStatus.OK);	
+	      
+       } catch (Exception e) {
+	      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+       }
+     }
+	
+	@PreAuthorize("hasAnyRole('ADMIN')")
+    @DeleteMapping("/feast-days/{id}")
+    public ResponseEntity<HttpStatus> deleteFeastDay(@PathVariable("id") long id) {   
+      try {
+    	  feastDayRepository.deleteById(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+      } catch (Exception e) {
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+      }
+    }
+	
+	@PreAuthorize("hasAnyRole('ADMIN')")
+	@PostMapping("/feast-days")
+	public ResponseEntity<?> addFeastDay(@Valid @RequestBody NewFeastDayRequest signUpRequest) {
+		
+		//System.out.println(signUpRequest.getDate());
+		
+		if ( !feastDayRepository.existsByDate(signUpRequest.getDate())) { 
+			
+			FeastDay feastDay = new FeastDay(signUpRequest.getDate()); 
+					feastDayRepository.save(feastDay);
+			return ResponseEntity.ok(new MessageResponse("Festivo creado con éxito!"));			
+			
+		}else {			
+			return ResponseEntity.badRequest().body(new MessageResponse("Error: Ya existe ese día como festivo "));
+		}			
+		
+	}	
 	
 	
 }

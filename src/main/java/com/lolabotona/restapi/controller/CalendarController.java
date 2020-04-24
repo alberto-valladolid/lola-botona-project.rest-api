@@ -2,11 +2,14 @@ package com.lolabotona.restapi.controller;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
@@ -29,12 +32,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.lolabotona.restapi.model.CalendarDay;
 import com.lolabotona.restapi.model.CalendarEvent;
+import com.lolabotona.restapi.model.FeastDay;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.model.UserGroup;
 import com.lolabotona.restapi.payload.request.ChgPwRequest;
 import com.lolabotona.restapi.payload.request.NewCalendarRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
 import com.lolabotona.restapi.model.Group;
+import com.lolabotona.restapi.repository.FeastDayRepository;
 import com.lolabotona.restapi.repository.GroupRepository;
 import com.lolabotona.restapi.repository.UserGroupRepository;
 import com.lolabotona.restapi.repository.UserRepository;
@@ -48,6 +53,9 @@ public class CalendarController {
 	
 	
 	  
+    @Autowired 
+	private FeastDayRepository feastDayRepository; 
+    
     @Autowired 
 	private UserGroupRepository userGroupRepository; 
     
@@ -73,7 +81,8 @@ public class CalendarController {
 	      String startString,endString; 
 	      LocalDate start,end; 
 	      
-	     
+	      
+
 	      //iterate previus month extra days	      
 	      preMonthExtraDays = CalendarDay.calcPreMonthExtraDays(c);
 	      
@@ -110,7 +119,7 @@ public class CalendarController {
 	        	      
 	      	        try {
 	      	    	    
-	      	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), false, new CalendarEvent(),  new CalendarEvent(), start.getDayOfWeek().getValue())); 
+	      	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), false, new CalendarEvent(),  new CalendarEvent(), start.getDayOfWeek().getValue(),false)); 
 	      	    	    
 	      	    	} catch(Exception e) { //this generic but you can control another types of exception
 	      	    	    // look the origin of excption 
@@ -136,6 +145,9 @@ public class CalendarController {
 		  YearMonth yearMonthObject = YearMonth.of(c.get(Calendar.YEAR), c.get(Calendar.MONTH)+1);	  
 		  currMonthDays = yearMonthObject.lengthOfMonth();		  
   		  String currMonthString =   String.valueOf(c.get(Calendar.MONTH)+1);
+  		  Date dayDate; 
+  		  boolean isFeastDay;  		  
+
   		  
   		  if (c.get(Calendar.MONTH) <10) {
   			currMonthString = "0"+currMonthString; 
@@ -144,74 +156,89 @@ public class CalendarController {
   		  startString = c.get(Calendar.YEAR) + "-" + currMonthString +"-"+ "01";
       	  endString =   c.get(Calendar.YEAR) + "-" + currMonthString +"-"+  currMonthDays;
       	  
+      	  
       	  System.out.println(startString + " " + endString);
+      	  
       	  
       	  start = LocalDate.parse(startString);
       	  end = LocalDate.parse(endString); 
       	  
-      	  while (!start.isAfter(end)) {
-      		  
-      		  System.out.println(start.getDayOfMonth());
-	        	      
-	      	        try {
-//	      	    	    
-	      	        	int dayOfWeek =  (start.getDayOfWeek().getValue() % 7) +1 ; 
-	      	        	
-	      	        	CalendarEvent morningEvent = new CalendarEvent();
-	      	        	CalendarEvent afternoonEvent = new CalendarEvent();;
-	      	        	
-	      	        	//find  morning groups 
-		      	  		Optional<Group> morningGroup = groupRepository.findByTimeofdayAndDayofweekAndActive("Mañana", dayOfWeek, true);
-		      	  		
-		      	  	    morningEvent.setGroupExist(morningGroup.isPresent());
-		      			if (morningEvent.isGroupExist()) {
-				      				
-		      	    	    Date parsedDate1 = dateFormat.parse(c.get(Calendar.YEAR) + "-" + currMonthString +  "-" +start.getDayOfMonth()  +" 12:00");
-		      	    	    Timestamp morningTimestamp = new java.sql.Timestamp(parsedDate1.getTime()); 
-		      	    	    morningEvent.setTimeOfDay(morningTimestamp);
-		      	    	    morningEvent.setGroupId(morningGroup.get().getId());		      	    	    
-		      	    	    morningEvent.setDescription(morningGroup.get().getDescription());
-		      	    	    morningEvent.setUserAssits(userGroupService.userAssists(morningGroup.get(), morningTimestamp ));		      	    	    
-		      	    	    morningEvent.setUsers(userGroupService.getUserAndCapacity(morningGroup.get(), morningTimestamp));
-		      	    	    
-		      	    	    if(!morningEvent.isUserAssits()) {
-		      	    	    	
-		      	    	    	morningEvent.setFull(userGroupService.eventIsFull(morningGroup.get(), morningTimestamp));
-		      	    	    	
-		      	    	    	
-		      	    	    }
-		      				
-		      			} 
-		      			
-		      			
-		      		    //find  afternoon groups 
-		      	  		Optional<Group> afternoonGroup = groupRepository.findByTimeofdayAndDayofweekAndActive("Tarde", dayOfWeek, true);
-		      	  		
-		      	  	    afternoonEvent.setGroupExist(afternoonGroup.isPresent());
-		      			if (afternoonEvent.isGroupExist()) {
-				      				
-		      				Date parsedDate2 = dateFormat.parse(c.get(Calendar.YEAR) + "-" + currMonthString +  "-" +start.getDayOfMonth()  +" 18:00");
-		      	    	    Timestamp afternoonTimestamp = new java.sql.Timestamp(parsedDate2.getTime()); 
-		      	    	    afternoonEvent.setTimeOfDay(afternoonTimestamp);
-		      	    	    afternoonEvent.setGroupId(afternoonGroup.get().getId());
-		      	    	    afternoonEvent.setDescription(afternoonGroup.get().getDescription());
-		      	    	    afternoonEvent.setUserAssits(userGroupService.userAssists(afternoonGroup.get(), afternoonTimestamp ));	
-		      	    	    afternoonEvent.setUsers(userGroupService.getUserAndCapacity(afternoonGroup.get(), afternoonTimestamp));
-		      	    	    if(!afternoonEvent.isUserAssits()) {
-		      	    	    	
-		      	    	    	afternoonEvent.setFull(userGroupService.eventIsFull(afternoonGroup.get(), afternoonTimestamp));
-		      	    	    	
-		      	    	    }
-		      				
-		      			} 
-		      
-	      	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), true, morningEvent, afternoonEvent, start.getDayOfWeek().getValue())); 
+      	  while (!start.isAfter(end)) {      		
+    
+	  	        try {
+	  	        	
+	  	        	
+	  	    	    dayDate	= new GregorianCalendar(c.get(Calendar.YEAR), Calendar.MONTH+1, start.getDayOfMonth()).getTime();
+	  	    	    
+	  	    	    System.out.println(start.getDayOfMonth());
+	  	    	    
+	      		    List<FeastDay> feastDays = new ArrayList<FeastDay>();    
+	      		    feastDayRepository.findAll().forEach(feastDays::add);	
+	  	    	    
+	  	    	    if(userGroupService.containsDate(feastDays, dayDate)) {	      	    	 
+	  	    	    	isFeastDay = true; 
+	  	    	    }else {
+	  	    	    	isFeastDay = false; 
+	  	    	    }
+	  	    	    
+	  	    	    
+	  	        	int dayOfWeek =  (start.getDayOfWeek().getValue() % 7) +1 ; 
+	  	        	
+	  	        	CalendarEvent morningEvent = new CalendarEvent();
+	  	        	CalendarEvent afternoonEvent = new CalendarEvent();;
+	  	        	
+	  	        	//find  morning groups 
+	      	  		Optional<Group> morningGroup = groupRepository.findByTimeofdayAndDayofweekAndActive("Mañana", dayOfWeek, true);
+	      	  		
+	      	  	    morningEvent.setGroupExist(morningGroup.isPresent());
+	      			if (morningEvent.isGroupExist()) {
+			      				
+	      	    	    Date parsedDate1 = dateFormat.parse(c.get(Calendar.YEAR) + "-" + currMonthString +  "-" +start.getDayOfMonth()  +" 12:00");
+	      	    	    Timestamp morningTimestamp = new java.sql.Timestamp(parsedDate1.getTime()); 
+	      	    	    morningEvent.setTimeOfDay(morningTimestamp);
+	      	    	    morningEvent.setGroupId(morningGroup.get().getId());		      	    	    
+	      	    	    morningEvent.setDescription(morningGroup.get().getDescription());
+	      	    	    morningEvent.setUserAssits(userGroupService.userAssists(morningGroup.get(), morningTimestamp ));		      	    	    
+	      	    	    morningEvent.setUsers(userGroupService.getUserAndCapacity(morningGroup.get(), morningTimestamp));
 	      	    	    
-	      	    	} catch(Exception e) { //this generic but you can control another types of exception
-	      	    	    // look the origin of excption 
-	      	    	}
+	      	    	    if(!morningEvent.isUserAssits()) {
+	      	    	    	
+	      	    	    	morningEvent.setFull(userGroupService.eventIsFull(morningGroup.get(), morningTimestamp));
+	      	    	    	
+	      	    	    	
+	      	    	    }
+	      				
+	      			} 
+	      			
+	      			
+	      		    //find  afternoon groups 
+	      	  		Optional<Group> afternoonGroup = groupRepository.findByTimeofdayAndDayofweekAndActive("Tarde", dayOfWeek, true);
+	      	  		
+	      	  	    afternoonEvent.setGroupExist(afternoonGroup.isPresent());
+	      			if (afternoonEvent.isGroupExist()) {
+			      				
+	      				Date parsedDate2 = dateFormat.parse(c.get(Calendar.YEAR) + "-" + currMonthString +  "-" +start.getDayOfMonth()  +" 18:00");
+	      	    	    Timestamp afternoonTimestamp = new java.sql.Timestamp(parsedDate2.getTime()); 
+	      	    	    afternoonEvent.setTimeOfDay(afternoonTimestamp);
+	      	    	    afternoonEvent.setGroupId(afternoonGroup.get().getId());
+	      	    	    afternoonEvent.setDescription(afternoonGroup.get().getDescription());
+	      	    	    afternoonEvent.setUserAssits(userGroupService.userAssists(afternoonGroup.get(), afternoonTimestamp ));	
+	      	    	    afternoonEvent.setUsers(userGroupService.getUserAndCapacity(afternoonGroup.get(), afternoonTimestamp));
+	      	    	    if(!afternoonEvent.isUserAssits()) {
+	      	    	    	
+	      	    	    	afternoonEvent.setFull(userGroupService.eventIsFull(afternoonGroup.get(), afternoonTimestamp));
+	      	    	    	
+	      	    	    }
+	      				
+	      			} 
+	      
+	  	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), true, morningEvent, afternoonEvent, start.getDayOfWeek().getValue(),isFeastDay)); 
+	  	    	    
+	  	    	} catch(Exception e) { //this generic but you can control another types of exception
+	  	    	    // look the origin of excption 
+	  	    	}
       		  
-      	      start = start.plusDays(1);
+	  	        start = start.plusDays(1);
       	  }       	  
 
       	  
@@ -248,7 +275,7 @@ public class CalendarController {
         		  System.out.println(start.getDayOfMonth());
 	        	      
 	      	        try {
-	      	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), false, new CalendarEvent(),  new CalendarEvent(), start.getDayOfWeek().getValue())); 
+	      	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), false, new CalendarEvent(),  new CalendarEvent(), start.getDayOfWeek().getValue(),false)); 
 	      	    	    
 	      	    	} catch(Exception e) { //this generic but you can control another types of exception
 	      	    	    // look the origin of excption 
@@ -270,68 +297,76 @@ public class CalendarController {
 	@PreAuthorize("(hasAnyRole('USER') or hasRole('ADMIN')) ")
 	@PostMapping("calendar/createRetrieve")
 	public ResponseEntity<?> createRetrieve(@Valid @RequestBody NewCalendarRequest rewRetrieveRequest, Authentication authentication) {
-		
-		Date today = new Date();
-		
-		if(rewRetrieveRequest.getDate().after(today)) {
-			if(userGroupService.getPendingRecieveCount() > 0) {
-				
-				Optional<Group> group = groupRepository.findById(rewRetrieveRequest.getGroupid());				
-				
-				if (group.isPresent()) {
+	
+	    List<FeastDay> feastDays = new ArrayList<FeastDay>();    
+	    feastDayRepository.findAll().forEach(feastDays::add);	
+	    
+	    LocalDate date = Instant.ofEpochMilli(rewRetrieveRequest.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDate();  	    
+	    Date dayDate	= new GregorianCalendar(date.getYear(), date.getMonthValue()-1, date.getDayOfMonth()).getTime();
+	    	    
+		if(!userGroupService.containsDate(feastDays,dayDate)) {
+			
+			Date today = new Date();
+			
+			if(rewRetrieveRequest.getDate().after(today)) {
+				if(userGroupService.getPendingRecieveCount() > 0) {
 					
-					if (userGroupService.userAssists(group.get(), rewRetrieveRequest.getDate())) {
-						return ResponseEntity
-								.badRequest()
-								.body(new MessageResponse("Error: El usuario ya está asiste a ese evento "));
-					}else {
+					Optional<Group> group = groupRepository.findById(rewRetrieveRequest.getGroupid());				
+					
+					if (group.isPresent()) {
 						
-						if (userGroupService.eventIsFull(group.get(), rewRetrieveRequest.getDate())) {
+						if (userGroupService.userAssists(group.get(), rewRetrieveRequest.getDate())) {
 							return ResponseEntity
 									.badRequest()
-									.body(new MessageResponse("Error: El grupo está completo "));
+									.body(new MessageResponse("Error: El usuario ya está asiste a ese evento "));
 						}else {
 							
-							//Group group = new Group (newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getTimeofday(), newGroupRequest.getDayofweek(), newGroupRequest.isActived());
-							
-							UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
-							Optional<User> user = userRepository.findById( userDetailsImpl.getId());
-							
-						    long absenceId = userGroupService.decreasePendingRecieveCount(user.get());							
-							
-							
-							UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "retrieve", true, rewRetrieveRequest.getDate(), absenceId); 
-							
-							System.out.println("AUSENCIA" + newUserGroup);
-							
-							userGroupRepository.save(newUserGroup);
-							
-							return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));
+							if (userGroupService.eventIsFull(group.get(), rewRetrieveRequest.getDate())) {
+								return ResponseEntity
+										.badRequest()
+										.body(new MessageResponse("Error: El grupo está completo "));
+							}else {
+								
+								//Group group = new Group (newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getTimeofday(), newGroupRequest.getDayofweek(), newGroupRequest.isActived());
+								
+								UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
+								Optional<User> user = userRepository.findById( userDetailsImpl.getId());
+								
+							    long absenceId = userGroupService.decreasePendingRecieveCount(user.get());							
+																
+								UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "retrieve", true, rewRetrieveRequest.getDate(), absenceId); 
+								
+								userGroupRepository.save(newUserGroup);
+								
+								return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));
+								
+							}
 							
 						}
 						
+					} else {
+						return ResponseEntity
+								.badRequest()
+								.body(new MessageResponse("Error: Grupo no encontrado"));
 					}
-					
-				} else {
+									
+				}else {
 					return ResponseEntity
 							.badRequest()
-							.body(new MessageResponse("Error: Grupo no encontrado"));
-				}
-								
+							.body(new MessageResponse("No dispone de clases pendientes"));
+				}				
+				
 			}else {
-				return ResponseEntity
-						.badRequest()
-						.body(new MessageResponse("No dispone de clases pendientes"));
+				  return ResponseEntity
+							.badRequest()
+							.body(new MessageResponse("Error: No se pueden crear asistencias en fechas pasadas"));
 			}
-			
-			
-		}else {
+		
+  	    }else {
 			  return ResponseEntity
 						.badRequest()
-						.body(new MessageResponse("Error: No se pueden crear asistencias en fechas pasadas"));
-		}
-		
-		 
+						.body(new MessageResponse("Error: No se pueden recuperar clases los días festivos"));
+  	    }
 		
 	}
 	
@@ -340,87 +375,85 @@ public class CalendarController {
 	@PostMapping("calendar/createAbsence")
 	public ResponseEntity<?> createAbsence(@Valid @RequestBody NewCalendarRequest rewRetrieveRequest, Authentication authentication) {
 		
-		Date today = new Date();
-		
-		if(rewRetrieveRequest.getDate().after(today)) {
-				
-			Optional<Group> group = groupRepository.findById(rewRetrieveRequest.getGroupid());				
+	    List<FeastDay> feastDays = new ArrayList<FeastDay>();    
+	    feastDayRepository.findAll().forEach(feastDays::add);	
+	    
+	    LocalDate date = Instant.ofEpochMilli(rewRetrieveRequest.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDate();  	    
+	    Date dayDate	= new GregorianCalendar(date.getYear(), date.getMonthValue()-1, date.getDayOfMonth()).getTime();
+	    
+		if(!userGroupService.containsDate(feastDays,dayDate)) {
 			
-			if (group.isPresent()) {
+			Date today = new Date();
+			
+			if(rewRetrieveRequest.getDate().after(today)) {
+					
+				Optional<Group> group = groupRepository.findById(rewRetrieveRequest.getGroupid());				
 				
-				if (userGroupService.userAssists(group.get(), rewRetrieveRequest.getDate())) {
+				if (group.isPresent()) {
 					
-					UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
-					Optional<User> user = userRepository.findById( userDetailsImpl.getId());
-					
-					Optional<UserGroup> existRetrieve = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(), group.get(), "retrieve", rewRetrieveRequest.getDate());
-
-					
-					if(existRetrieve.isPresent()) {
+					if (userGroupService.userAssists(group.get(), rewRetrieveRequest.getDate())) {
 						
-				        try {
-				        
-				        	userGroupRepository.deleteById(existRetrieve.get().getId());
-				        	
-				     
-				        	
-				        	Optional<UserGroup> absenceGroup = userGroupRepository.findById(existRetrieve.get().getAbsenceid());
-				        	
-				        	System.out.println( "wwwwwwwww"+absenceGroup);
-				        	
-				    		if (absenceGroup.isPresent()) {
-				    			
-				    			System.out.println(absenceGroup.get());
-				    			UserGroup currUserGroup  = absenceGroup.get(); 
-				    			currUserGroup.setRetrieved(false);
-				    			userGroupRepository.save(currUserGroup); 			
-				    			
-				    		} 
+						UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
+						Optional<User> user = userRepository.findById( userDetailsImpl.getId());
+						
+						Optional<UserGroup> existRetrieve = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(), group.get(), "retrieve", rewRetrieveRequest.getDate());
 	
-				        	
-				        } catch (Exception e) {
-				        	return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
-				        }
-				  		
+						
+						if(existRetrieve.isPresent()) {
+							
+					        try {
+					        
+					        	userGroupRepository.deleteById(existRetrieve.get().getId());
+					        	
+					        	Optional<UserGroup> absenceGroup = userGroupRepository.findById(existRetrieve.get().getAbsenceid());
+					        	
+					    		if (absenceGroup.isPresent()) {
+					    			
+					    			System.out.println(absenceGroup.get());
+					    			UserGroup currUserGroup  = absenceGroup.get(); 
+					    			currUserGroup.setRetrieved(false);
+					    			userGroupRepository.save(currUserGroup); 			
+					    			
+					    		} 		
+					        	
+					        } catch (Exception e) {
+					        	return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+					        }
+					  		
+						}else {
+							
+							UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "absence", false, rewRetrieveRequest.getDate(),null); 			
+							System.out.println(newUserGroup);
+							userGroupRepository.save(newUserGroup);							
+						}						
+						
+						return ResponseEntity.ok(new MessageResponse("Ausencia creada con éxito!"));
+						
 					}else {
-						
-						UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "absence", false, rewRetrieveRequest.getDate(),null); 			
-						System.out.println(newUserGroup);
-						userGroupRepository.save(newUserGroup);
-						
+						return ResponseEntity
+								.badRequest()
+								.body(new MessageResponse("Error: No se puede crear la ausencia, el usuario no asiste a clase ese día "  ));
 					}
 					
-					
-					return ResponseEntity.ok(new MessageResponse("Ausencia creada con éxito!"));
-					
-						
-				
-				}else {
+				} else {
 					return ResponseEntity
 							.badRequest()
-							.body(new MessageResponse("Error: No se puede crear la ausencia, el usuario no asiste a clase ese día "  ));
+							.body(new MessageResponse("Error: Grupo no encontrado"));
 				}
 				
-			} else {
-				return ResponseEntity
-						.badRequest()
-						.body(new MessageResponse("Error: Grupo no encontrado"));
+			}else {
+				  return ResponseEntity
+							.badRequest()
+							.body(new MessageResponse("Error: No se pueden crear asistencias en fechas pasadas"));
 			}
-							
-	
-			
-			
-		}else {
+
+	    }else {
 			  return ResponseEntity
 						.badRequest()
-						.body(new MessageResponse("Error: No se pueden crear asistencias en fechas pasadas"));
-		}
-
-		
+						.body(new MessageResponse("Error: No se pueden crear ausencias los días festivos"));
+  	    }
 		 
 		
 	}
-	
-		
 	
 }

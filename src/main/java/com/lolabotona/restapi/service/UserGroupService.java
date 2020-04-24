@@ -1,5 +1,6 @@
 package com.lolabotona.restapi.service;
 
+import java.util.Date;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.List;
@@ -11,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-
+import com.lolabotona.restapi.model.FeastDay;
 import com.lolabotona.restapi.model.Group;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.model.UserGroup;
@@ -130,6 +131,10 @@ public class UserGroupService  {
     	
     }
     
+    
+    public boolean containsDate(final List<FeastDay> list, final Date date){
+        return list.stream().map(FeastDay::getDate).filter(date::equals).findFirst().isPresent();
+    }
     
 
 	

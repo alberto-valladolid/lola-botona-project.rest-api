@@ -21,15 +21,18 @@ public class CalendarDay {
 	private boolean currentMonth; 
 	private CalendarEvent firstEvent; 
 	private CalendarEvent secondEvent; 
+	private boolean isFeastDay; 
 	
 	
 	
-	public CalendarDay(int monthDay,boolean currentMonth,  CalendarEvent firstEvent, CalendarEvent secondEvent,int weekDay) {
+	
+	public CalendarDay(int monthDay,boolean currentMonth,  CalendarEvent firstEvent, CalendarEvent secondEvent,int weekDay,boolean isFeastDay) {
 		this.monthDay = monthDay; 
 		this.currentMonth = currentMonth; 
 		this.firstEvent = firstEvent; 
 		this.secondEvent = secondEvent; 
 		this.weekDay = weekDay; 
+		this.isFeastDay = isFeastDay; 
 	}
 	
 	
