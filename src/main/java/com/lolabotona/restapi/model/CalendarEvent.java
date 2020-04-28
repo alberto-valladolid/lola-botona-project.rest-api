@@ -9,7 +9,6 @@ import lombok.Setter;
 @Setter
 public class CalendarEvent {
 
-	private boolean groupExist; 
 	private Long groupId; 
 	private boolean userAssits; 
 	private boolean isFull; 
@@ -19,8 +18,8 @@ public class CalendarEvent {
     
     
     
-    public CalendarEvent(boolean groupExist,boolean userAssits, boolean isFull, Timestamp timeOfDay,String description, Long groupId,String users) {
-    	this.groupExist = groupExist; 
+    public CalendarEvent(boolean userAssits, boolean isFull, Timestamp timeOfDay,String description, Long groupId,String users) {
+   
     	this.groupId = groupId; 
     	this.userAssits = userAssits; 
     	this.isFull = isFull; 
@@ -32,6 +31,11 @@ public class CalendarEvent {
     
     public CalendarEvent() {
     }
+    
+	@Override
+	public String toString() {
+		return "CalendarEvent [groupId=" + groupId + ", userAssits=" + userAssits + ", isFull=" + isFull + " , timeOfDay=" + timeOfDay +" , description=" + description +" , users=" + users + "]";
+	}
 
 
 }

@@ -1,7 +1,9 @@
 package com.lolabotona.restapi.model;
 
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.persistence.GeneratedValue;
@@ -19,19 +21,19 @@ public class CalendarDay {
 	private int monthDay; 	
 	private int weekDay; 
 	private boolean currentMonth; 
-	private CalendarEvent firstEvent; 
-	private CalendarEvent secondEvent; 
+//    private Set<CalendarEvent> events;
+	private ArrayList<CalendarEvent> events;
+	 
 	private boolean isFeastDay; 
 	
 	
 	
 	
-	public CalendarDay(int monthDay,boolean currentMonth,  CalendarEvent firstEvent, CalendarEvent secondEvent,int weekDay,boolean isFeastDay) {
-		this.monthDay = monthDay; 
-		this.currentMonth = currentMonth; 
-		this.firstEvent = firstEvent; 
-		this.secondEvent = secondEvent; 
+	public CalendarDay(int monthDay,boolean currentMonth,  int weekDay,boolean isFeastDay,ArrayList<CalendarEvent> events) {
+		this.monthDay = monthDay;
 		this.weekDay = weekDay; 
+		this.currentMonth = currentMonth; 
+		this.events = events; 	
 		this.isFeastDay = isFeastDay; 
 	}
 	

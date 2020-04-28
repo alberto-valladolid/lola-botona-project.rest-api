@@ -89,9 +89,12 @@ public class UserController {
 	
 	@GetMapping("/users/pending-retrieves")
 	@PreAuthorize("(hasRole('USER')  or hasRole('ADMIN'))")
-	public   Map<String, Integer> getUserPendingRetrieveCount( Authentication authentication) {				
+	public   Map<String, Integer> getUserPendingRetrieveCount( Authentication authentication) {		
 		
-		int userPendingRetrieveCount = userGroupService.getPendingRecieveCount();	
+		UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
+  		User user = userRepository.findById( userDetailsImpl.getId()).get();	
+		
+		int userPendingRetrieveCount = userGroupService.getPendingRecieveCount(user);	
 		
 		return Collections.singletonMap("count", userPendingRetrieveCount );
 

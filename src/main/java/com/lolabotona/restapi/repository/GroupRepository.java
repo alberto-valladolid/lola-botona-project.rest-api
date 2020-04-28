@@ -11,8 +11,8 @@ import com.lolabotona.restapi.model.Group;
 
 public interface GroupRepository extends JpaRepository<Group, Long> {
 
-	List<Group>  findByDayofweekAndTimeofday( int dayofweek, String timeofday  );
+	//List<Group>  findByDayofweekAndTimeofday( int dayofweek, String timeofday  );
 	
-	Optional<Group> findByTimeofdayAndDayofweekAndActive(String timeOfDay, int dayOfWeek, boolean active);
+	List<Group> findByDayofweekAndActiveOrderByShoworderAsc( int dayOfWeek, boolean active);
 	
 }

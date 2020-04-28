@@ -32,7 +32,7 @@ import com.lolabotona.restapi.service.UserDetailsImpl;
 @Entity
 @Table(	name = "groups", 
 uniqueConstraints = { 
-	@UniqueConstraint(columnNames = {"dayofweek","timeofday"})
+	@UniqueConstraint(columnNames = {"dayofweek","showorder"})
 })
 
 public class Group {
@@ -56,7 +56,7 @@ public class Group {
 //    private int orderShown;
 	
     @NotBlank    
-    private String timeofday; //morning or afternoon. Es posible que no sea necesario 
+    private int showorder; 
 
     private int dayofweek;
 
@@ -67,11 +67,11 @@ public class Group {
 	public Group() {
 	}
 
-	public Group(int capacity, String description,/* int orderShown,*/ String timeofday, int dayofweek,boolean active) {
+	public Group(int capacity, String description, int showorder, int dayofweek,boolean active) {
 		this.capacity = capacity;
 		this.description = description;
 		//this.orderShown = orderShown;
-		this.timeofday = timeofday;
+		this.showorder = showorder;
 		this.dayofweek = dayofweek;
 		this.active = active; 	
 
@@ -119,12 +119,12 @@ public class Group {
 //		this.orderShown = orderShown;
 //	}
 	
-	public String gettimeofday() {
-		return timeofday;
+	public int getshoworder() {
+		return showorder;
 	}
 	
-	public void settimeofday(String timeofday) {
-		this.timeofday = timeofday;
+	public void setshoworder(int showorder) {
+		this.showorder = showorder;
 	}
 	
 	public int getdayofweek() {
@@ -146,7 +146,7 @@ public class Group {
 	
 	@Override
 	public String toString() {
-		return "Group [id=" + id + ", capacity=" + capacity + ", description=" + description + /*", orderShown=" + orderShown +*/ " , timeofday=" + timeofday +" , dayofweek=" + dayofweek +" , active=" + active + "]";
+		return "Group [id=" + id + ", capacity=" + capacity + ", description=" + description + /*", orderShown=" + orderShown +*/ " , showorder=" + showorder +" , dayofweek=" + dayofweek +" , active=" + active + "]";
 	}
 	
     @Override

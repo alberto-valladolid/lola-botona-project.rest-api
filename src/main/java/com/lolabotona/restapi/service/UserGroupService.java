@@ -33,10 +33,9 @@ public class UserGroupService  {
 	@Autowired 
 	private   UserGroupRepository userGroupRepository; 
 
-	public   int getPendingRecieveCount() {	
+	public   int getPendingRecieveCount(User user) {	
 	
-		UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		Optional<User> user = userRepository.findById( userDetailsImpl.getId());
+	
 		
 		//Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
 		Calendar currentCalendar = Calendar.getInstance();
@@ -48,19 +47,13 @@ public class UserGroupService  {
 		Timestamp aMonthAgoTimestamp = new Timestamp(aMonthAgoCalendar.getTimeInMillis());	
 	
 
-		return userGroupRepository.countByTypeAndUserAndRetrievedAndDateatBetween("absence", user.get(), false, aMonthAgoTimestamp , currentTimestamp); 
+		return userGroupRepository.countByTypeAndUserAndRetrievedAndDateatBetween("absence", user, false, aMonthAgoTimestamp , currentTimestamp); 
 		
 	}
 	
 	
-    public boolean userAssists(  Group group,  Timestamp dateAt ) {    	
-    	
-		UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
-		Optional<User> user = userRepository.findById( userDetailsImpl.getId());
+    public boolean userAssists(  Group group,  Timestamp dateAt , User user,Optional<UserGroup> recurrentUserGroup, Optional<UserGroup> abcenseUserGroup, Optional<UserGroup> retrieveUserGroup) { 
 
-		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user.get(), group, "recurrent");
-		Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(), group, "absence", dateAt);
-		Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(), group, "retrieve", dateAt);
 		
 		if (recurrentUserGroup.isPresent() && !abcenseUserGroup.isPresent() || retrieveUserGroup.isPresent() ) {
  			return true; 
@@ -71,15 +64,10 @@ public class UserGroupService  {
     }
     
     
-    public boolean eventIsFull(  Group group,  Timestamp dateAt ) {   
-	
-		
-		List<UserGroup> recurrentUserGroup = userGroupRepository.findByGroupAndType( group, "recurrent");
-		List<UserGroup> abcenseUserGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "absence", dateAt);
-		List<UserGroup> retrieveUserGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "retrieve", dateAt);
+    public boolean eventIsFull(  Group group,  Timestamp dateAt, List<UserGroup> recurrentsGroup, List<UserGroup> abcensesGroup, List<UserGroup> retrievesGroup ) {   
 	
 
-		if ((recurrentUserGroup.size() -    abcenseUserGroup.size() +  retrieveUserGroup.size() ) < group.getCapacity() ) {
+		if ((recurrentsGroup.size() -    abcensesGroup.size() +  retrievesGroup.size() ) < group.getCapacity() ) {
  			return false; 
 		}else {
 			return true; 
@@ -88,15 +76,10 @@ public class UserGroupService  {
     }
     
     
-    public String getUserAndCapacity(  Group group,  Timestamp dateAt ) {   
-	
-		
-		List<UserGroup> recurrentUserGroup = userGroupRepository.findByGroupAndType( group, "recurrent");
-		List<UserGroup> abcenseUserGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "absence", dateAt);
-		List<UserGroup> retrieveUserGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "retrieve", dateAt);
+    public String getUserAndCapacity(  Group group,  Timestamp dateAt, List<UserGroup> recurrentsGroup, List<UserGroup> abcensesGroup, List<UserGroup> retrievesGroup ) {  
 	
 
-		return recurrentUserGroup.size() -    abcenseUserGroup.size() +  retrieveUserGroup.size() +"/" + group.getCapacity(); 
+		return recurrentsGroup.size() -    abcensesGroup.size() +  retrievesGroup.size() +"/" + group.getCapacity(); 
 		
 
 	
@@ -135,6 +118,9 @@ public class UserGroupService  {
     public boolean containsDate(final List<FeastDay> list, final Date date){
         return list.stream().map(FeastDay::getDate).filter(date::equals).findFirst().isPresent();
     }
+
+
+
     
 
 	
