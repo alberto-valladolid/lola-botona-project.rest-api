@@ -17,6 +17,7 @@ import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotBlank;
 //import javax.validation.constraints.Size;
 //import java.sql.Timestamp;
+import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -55,7 +56,7 @@ public class Group {
 //    @NotBlank 
 //    private int orderShown;
 	
-    @NotBlank    
+    @NotNull 
     private int showorder; 
 
     private int dayofweek;

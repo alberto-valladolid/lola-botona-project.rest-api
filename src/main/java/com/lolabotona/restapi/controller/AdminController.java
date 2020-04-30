@@ -226,19 +226,19 @@ public class AdminController {
 	@PostMapping("/groups")
 	public ResponseEntity<?> addGroupByAdmin(@Valid @RequestBody NewGroupRequest newGroupRequest) {
 		
-		List<Group> groups = new ArrayList<Group>();	
-		groups = groupRepository.findByDayofweekAndTimeofday(newGroupRequest.getDayofweek(), newGroupRequest.getTimeofday());
+		List<Group> groups = new ArrayList<Group>();			
+		groups = groupRepository.findByDayofweekAndShoworder(newGroupRequest.getDayofweek(), newGroupRequest.getShoworder());
 				
 		System.out.println(groups);
 		
 		if ( groups.isEmpty()) { 
 			
-			Group group = new Group (newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getTimeofday(), newGroupRequest.getDayofweek(), newGroupRequest.isActived());
+			Group group = new Group(newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getShoworder(),  newGroupRequest.getDayofweek(), newGroupRequest.isActived());
 			groupRepository.save(group);
 			return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));			
 			
 		}else {			
-			return ResponseEntity.badRequest().body(new MessageResponse("Error: Ya existe un grupo en ese día y ese turno"));
+			return ResponseEntity.badRequest().body(new MessageResponse("Error: Ya existe un grupo en ese día y en ese orden"));
 		}
 		
 		
@@ -261,19 +261,22 @@ public class AdminController {
     @PutMapping("/groups/{id}")
     public ResponseEntity<?> updateGroup(@PathVariable("id") long id, @RequestBody Group newGroup) {
 		
-		List<Group> groups = new ArrayList<Group>();	
-		groups = groupRepository.findByDayofweekAndTimeofday(newGroup.getdayofweek(), newGroup.gettimeofday());
+
 		
 		Optional<Group> storedGroupData = groupRepository.findById(id);	
 		
 		if(storedGroupData.isPresent()) {
 			
-			if (storedGroupData.get().getdayofweek() == newGroup.getdayofweek()  &&    newGroup.gettimeofday().equals(storedGroupData.get().gettimeofday()) ) {
+			List<Group> groups = new ArrayList<Group>();	
+			
+			groups = groupRepository.findByDayofweekAndShoworder(newGroup.getdayofweek(), newGroup.getshoworder());
+			
+			if (storedGroupData.get().getdayofweek() == newGroup.getdayofweek()  &&    newGroup.getshoworder() == storedGroupData.get().getshoworder())  {
 				
 		    	Group group = storedGroupData.get(); 		        
 		    	group.setCapacity(newGroup.getCapacity());
 		    	group.setDescription(newGroup.getDescription());  
-		    	group.settimeofday(newGroup.gettimeofday());
+		    	group.setshoworder(newGroup.getshoworder());
 		    	group.setdayofweek(newGroup.getdayofweek());
 		    	group.setActive(newGroup.getActive());  
 	            return new ResponseEntity<>(groupRepository.save(group), HttpStatus.OK);                   
@@ -285,14 +288,14 @@ public class AdminController {
 			    	Group group = storedGroupData.get(); 		        
 			    	group.setCapacity(newGroup.getCapacity());
 			    	group.setDescription(newGroup.getDescription());  
-			    	group.settimeofday(newGroup.gettimeofday());
+			    	group.setshoworder(newGroup.getshoworder());
 			    	group.setdayofweek(newGroup.getdayofweek());
 			    	group.setActive(newGroup.getActive());  
 		            return new ResponseEntity<>(groupRepository.save(group), HttpStatus.OK); 
 		              
 				}else {	
 					
-					return ResponseEntity.badRequest().body(new MessageResponse("Error: Ya existe un grupo en ese día y ese turno"));
+					return ResponseEntity.badRequest().body(new MessageResponse("Error: Ya existe un grupo en ese día y en ese orden"));
 					
 				}
 			}

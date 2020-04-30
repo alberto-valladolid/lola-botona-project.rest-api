@@ -17,9 +17,9 @@ public class NewGroupRequest {
 	    @NotBlank    
 	    private String description; 
 	    
-	    @NotBlank    
-	    private String timeofday; //morning or afternoon. Es posible que no sea necesario 
-
+	    @NotNull   
+	    private int showorder; 
+	    
 	    private int dayofweek;
 
 	    
