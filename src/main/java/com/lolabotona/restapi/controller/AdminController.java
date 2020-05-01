@@ -2,13 +2,16 @@ package com.lolabotona.restapi.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lolabotona.restapi.model.AppConfig;
 import com.lolabotona.restapi.model.FeastDay;
 import com.lolabotona.restapi.model.Group;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.payload.request.SignupRequest;
+import com.lolabotona.restapi.payload.request.ChgAppConfig;
 import com.lolabotona.restapi.payload.request.NewFeastDayRequest;
 import com.lolabotona.restapi.payload.request.NewGroupRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
+import com.lolabotona.restapi.repository.AppConfigRepository;
 import com.lolabotona.restapi.repository.FeastDayRepository;
 import com.lolabotona.restapi.repository.GroupRepository;
 import com.lolabotona.restapi.repository.UserRepository;
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 //import java.util.Optional;
@@ -52,6 +56,10 @@ import org.springframework.http.ResponseEntity;
 @RestController
 @RequestMapping("/api/secure")
 public class AdminController {
+	
+	@Autowired 
+	private AppConfigRepository appConfigRepository; 
+
 	
 	@Autowired 
 	private FeastDayRepository feastDayRepository; 
@@ -355,6 +363,70 @@ public class AdminController {
 		}			
 		
 	}	
+	
+	
+	@PreAuthorize("hasAnyRole('ADMIN')")
+	@GetMapping("/app-config")
+    public ResponseEntity<?> getAppConfig() {			
+		
+	  try {
+		  
+		  
+		  Optional<AppConfig> appConfig = appConfigRepository.findById( (long) 1);
+		
+		  if (!appConfig.isPresent()) {
+			  
+		    AppConfig newAppConfig = new AppConfig(1,120,30); //default config values
+		  	
+			appConfigRepository.save(newAppConfig);	
+			
+			appConfig = appConfigRepository.findById( (long) 1);
+			  
+		  } 
+
+		  return new ResponseEntity<>(appConfig.get(), HttpStatus.OK);	
+	      
+       } catch (Exception e) {
+	      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+       }
+	  
+     }
+	
+	@PreAuthorize("hasAnyRole('ADMIN')")
+    @PutMapping("/app-config")
+    public ResponseEntity<?> updateAppConfig(  @Valid @RequestBody ChgAppConfig chgAppConfig ) {
+		
+	  try {
+		  
+		  Optional<AppConfig> appConfig = appConfigRepository.findById( (long) 1);
+	
+		  if (appConfig.isPresent()) {		
+			  
+		    AppConfig appConfigUpdate = appConfig.get();
+		    
+		    appConfigUpdate.setAbsenceDays(chgAppConfig.getAbsenceDays());
+		    appConfigUpdate.setEventMinutes(chgAppConfig.getEventMinutes());			  
+	
+            return new ResponseEntity<>(appConfigRepository.save(appConfigUpdate), HttpStatus.OK);         
+            
+		  } else {
+		    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		  }
+		  
+		  
+      } catch (Exception e) {
+	      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+  
+
+    	    	
+  
+
+              
+    }
+
+	
+	
+	}
 	
 	
 }

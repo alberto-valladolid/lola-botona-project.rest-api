@@ -7,47 +7,44 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.lolabotona.restapi.model.AppConfig;
 import com.lolabotona.restapi.model.FeastDay;
 import com.lolabotona.restapi.model.Group;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.model.UserGroup;
-import com.lolabotona.restapi.payload.response.MessageResponse;
-//import com.lolabotona.restapi.repository.GroupRepository;
+import com.lolabotona.restapi.repository.AppConfigRepository;
 import com.lolabotona.restapi.repository.UserGroupRepository;
-import com.lolabotona.restapi.repository.UserRepository;
+
 
 @Service
 public class UserGroupService  {
 	
-//	@Autowired 
-//	private   GroupRepository groupRepository;
+
 	
 	@Autowired 
-	private   UserRepository userRepository; 
+	private   AppConfigRepository appConfigRepository; 
+	
+
 	
 	@Autowired 
 	private   UserGroupRepository userGroupRepository; 
 
-	public   int getPendingRecieveCount(User user) {	
-	
-	
+	public   int getPendingRecieveCount(User user, AppConfig appConfig) {	
+		
 		
 		//Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
-		Calendar currentCalendar = Calendar.getInstance();
-		currentCalendar.add(Calendar.MONTH, +2);
-		Timestamp currentTimestamp = new Timestamp(currentCalendar.getTimeInMillis());	
+		Calendar futureCalendar = Calendar.getInstance();
+		futureCalendar.add(Calendar.YEAR, 1);
+		Timestamp futureTimestamp = new Timestamp(futureCalendar.getTimeInMillis());			
 		
 		Calendar aMonthAgoCalendar = Calendar.getInstance();
-		aMonthAgoCalendar.add(Calendar.MONTH, -1);
+		aMonthAgoCalendar.add(Calendar.DAY_OF_YEAR, -appConfig.getAbsenceDays());
 		Timestamp aMonthAgoTimestamp = new Timestamp(aMonthAgoCalendar.getTimeInMillis());	
-	
+		
 
-		return userGroupRepository.countByTypeAndUserAndRetrievedAndDateatBetween("absence", user, false, aMonthAgoTimestamp , currentTimestamp); 
+		return userGroupRepository.countByTypeAndUserAndRetrievedAndDateatBetween("absence", user, false, aMonthAgoTimestamp , futureTimestamp); 
 		
 	}
 	
@@ -76,13 +73,10 @@ public class UserGroupService  {
     }
     
     
-    public String getUserAndCapacity(  Group group,  Timestamp dateAt, List<UserGroup> recurrentsGroup, List<UserGroup> abcensesGroup, List<UserGroup> retrievesGroup ) {  
-	
+    public String getUserAndCapacity(  Group group,  Timestamp dateAt, List<UserGroup> recurrentsGroup, List<UserGroup> abcensesGroup, List<UserGroup> retrievesGroup ) {  	
 
 		return recurrentsGroup.size() -    abcensesGroup.size() +  retrievesGroup.size() +"/" + group.getCapacity(); 
-		
-
-	
+			
     }
     
     

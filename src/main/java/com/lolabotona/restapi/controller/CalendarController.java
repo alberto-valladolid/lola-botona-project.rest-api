@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lolabotona.restapi.model.AppConfig;
 import com.lolabotona.restapi.model.CalendarDay;
 import com.lolabotona.restapi.model.CalendarEvent;
 import com.lolabotona.restapi.model.FeastDay;
@@ -42,6 +43,7 @@ import com.lolabotona.restapi.payload.request.ChgPwRequest;
 import com.lolabotona.restapi.payload.request.NewCalendarRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
 import com.lolabotona.restapi.model.Group;
+import com.lolabotona.restapi.repository.AppConfigRepository;
 import com.lolabotona.restapi.repository.FeastDayRepository;
 import com.lolabotona.restapi.repository.GroupRepository;
 import com.lolabotona.restapi.repository.UserGroupRepository;
@@ -54,7 +56,8 @@ import com.lolabotona.restapi.service.UserGroupService;
 @RequestMapping("/api")
 public class CalendarController {
 	
-	
+	@Autowired 
+	private AppConfigRepository appConfigRepository; 
 	  
     @Autowired 
 	private FeastDayRepository feastDayRepository; 
@@ -134,23 +137,17 @@ public class CalendarController {
 
     	  }
     	  
-  
-		  
-
-   	  
-//    	    System.out.println(userGroupRepository.asdf(group.get(), user.get(), "recurrent"));
-
-
-    	     
-    	  //iterate current month days
-    	  
   		
+    	  
+      	  //iterate current month days
     	  int currMonthDays;     	  
 		  YearMonth yearMonthObject = YearMonth.of(c.get(Calendar.YEAR), c.get(Calendar.MONTH)+1);	  
 		  currMonthDays = yearMonthObject.lengthOfMonth();		  
   		  String currMonthString =   String.valueOf(c.get(Calendar.MONTH)+1);
   		  Date dayDate; 
-  		  boolean isFeastDay;  	
+  		  boolean isFeastDay;  
+  		  
+
   		  
 		  UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
   		  User user = userRepository.findById( userDetailsImpl.getId()).get();
@@ -175,7 +172,7 @@ public class CalendarController {
 	  	        try {
 	  	        	
 	  	        	
-	  	    	    dayDate	= new GregorianCalendar(c.get(Calendar.YEAR), Calendar.MONTH+1, start.getDayOfMonth()).getTime();
+	  	    	    dayDate	= new GregorianCalendar(c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, start.getDayOfMonth()).getTime();
 	  	    	    
 	  	    	    System.out.println(start.getDayOfMonth());
 	  	    	    
@@ -186,26 +183,20 @@ public class CalendarController {
 	  	    	    	isFeastDay = true; 
 	  	    	    }else {
 	  	    	    	isFeastDay = false; 
-	  	    	    }
-	  	    	    
+	  	    	    }	  	    	    
 	  	    	    
 	  	        	int dayOfWeek =  (start.getDayOfWeek().getValue() % 7) +1 ; 
-	  	        	
-	  
-	  	        	
 	  	        	
 	  	        	//find  current day Group
 	      	  		List<Group> groups = groupRepository.findByDayofweekAndActiveOrderByShoworderAsc( dayOfWeek, true);
 	      	  			
 //	      	  		Set<CalendarEvent> events = new HashSet<CalendarEvent>();   es importante el orden y por eso se modifica a arraylist
 	      	  	    ArrayList<CalendarEvent> events = new ArrayList<CalendarEvent>();
-      	  	    	
-      	  	    	
-	      	  	     
+      	  	        
 	      			//if (!groups.isEmpty()) {	      	  		
 	
       				for (Group group : groups) { 
-      					System.out.println(group);
+      		
       					CalendarEvent calendarEvent = new CalendarEvent();      					
       					String hourEvent; 
       					
@@ -215,36 +206,23 @@ public class CalendarController {
       						hourEvent = "12:"+group.getshoworder();
       					}
         				
-          	    	    Date parsedDate1 = dateFormat.parse(c.get(Calendar.YEAR) + "-" + currMonthString +  "-" +start.getDayOfMonth() + " "  + hourEvent);
-          	    	    
+          	    	    Date parsedDate1 = dateFormat.parse(c.get(Calendar.YEAR) + "-" + currMonthString +  "-" +start.getDayOfMonth() + " "  + hourEvent);          	    	    
           	    	    Timestamp timestampEvent = new java.sql.Timestamp(parsedDate1.getTime());  
           	    	    
           	    	    
 	          	  		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user, group, "recurrent");
 	          			Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group, "absence", timestampEvent);
-	          			Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group, "retrieve", timestampEvent);
-	          	    	    
+	          			Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group, "retrieve", timestampEvent);	          	    	    
 	          			
 	          			List<UserGroup> recurrentsGroup = userGroupRepository.findByGroupAndType( group, "recurrent");
 	          			List<UserGroup> abcensesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "absence", timestampEvent);
-	          			List<UserGroup> retrievesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "retrieve", timestampEvent);
-	          			
+	          			List<UserGroup> retrievesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "retrieve", timestampEvent);	          			
           	    	    
           	    	    calendarEvent.setTimeOfDay(timestampEvent);
-//          	    	   
           	    	    
-	          	    	calendarEvent.setGroupId(group.getId());		      	    	    
+	          	    	calendarEvent.setGroupId(group.getId());
 	          	    	calendarEvent.setDescription(group.getDescription());
-	          	    	
-	          	    	
-	       
-	          	    	
-	          	    	 //System.out.println("adsf");
-	          	    	
-	          	    	 events.add(calendarEvent);
-	          	    	
-	          	    	 
-          	           
+	          	    	events.add(calendarEvent);   
 	          	    	
 	          	    	calendarEvent.setUserAssits(userGroupService.userAssists(group, timestampEvent ,user, recurrentUserGroup, abcenseUserGroup, retrieveUserGroup));		      	    	    
 	          	    	calendarEvent.setUsers(userGroupService.getUserAndCapacity(group, timestampEvent, recurrentsGroup, abcensesGroup, retrievesGroup));
@@ -253,21 +231,12 @@ public class CalendarController {
           	    	    	
           	    	    	calendarEvent.setFull(userGroupService.eventIsFull(group, timestampEvent, recurrentsGroup, abcensesGroup, retrievesGroup));
           	    	    	
-          	    	    	
           	    	    }
       					
-      				
       				}
 	      				
-  				   
-      				
-		  
-	      				
 	      			//} 
-	      			
-	      			
-	
-	      
+	      				      			
 	  	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), true,  start.getDayOfWeek().getValue(),isFeastDay,events)); 
 	  	    	    
 	  	    	} catch(Exception e) { //this generic but you can control another types of exception
@@ -277,8 +246,6 @@ public class CalendarController {
 	  	        start = start.plusDays(1);
       	  }       	  
 
-      	  
-      	  
       	  
 	  	  //iterate next month extra days
       	 postMonthExtraDays = CalendarDay.calcPostMonthExtraDays(c);
@@ -342,13 +309,23 @@ public class CalendarController {
 		if(!userGroupService.containsDate(feastDays,dayDate)) {
 			
 			Date today = new Date();
-			
+	
 			if(rewRetrieveRequest.getDate().after(today)) {
 				
 				UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 				User user = userRepository.findById( userDetailsImpl.getId()).get();
 				
-				if(userGroupService.getPendingRecieveCount(user) > 0) {
+				Optional<AppConfig> appConfig = appConfigRepository.findById( (long) 1);
+				
+				if (!appConfig.isPresent()) {
+				  
+					return ResponseEntity
+							.badRequest()
+							.body(new MessageResponse("Error: La aplicación necesita autogenerar la configuración. El administrador debe acceder a la configuración de la aplicación."));
+				  
+				} 
+				
+				if(userGroupService.getPendingRecieveCount(user,appConfig.get()) > 0) {
 										
 					
 					
@@ -429,6 +406,9 @@ public class CalendarController {
 	    
 		if(!userGroupService.containsDate(feastDays,dayDate)) {
 			
+//	        Calendar currentCalendar  = (Calendar)Calendar.getInstance(); 
+//	        currentCalendar.add(Calendar.MONTH, 2);
+	        
 			Date today = new Date();
 			
 			if(rewRetrieveRequest.getDate().after(today)) {

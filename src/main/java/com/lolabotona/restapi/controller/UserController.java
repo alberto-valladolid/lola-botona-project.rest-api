@@ -20,9 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.lolabotona.restapi.repository.AppConfigRepository;
 import com.lolabotona.restapi.repository.UserRepository;
 import com.lolabotona.restapi.service.UserDetailsImpl;
 import com.lolabotona.restapi.service.UserGroupService;
+import com.lolabotona.restapi.model.AppConfig;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.payload.request.ChgPwRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
@@ -40,7 +42,8 @@ public class UserController {
 	private UserGroupService userGroupService; 
 	
 
-	
+	@Autowired 
+	private AppConfigRepository appConfigRepository; 
 	
 	@Autowired
 	private PasswordEncoder passwordEncoder; 
@@ -93,8 +96,11 @@ public class UserController {
 		
 		UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
   		User user = userRepository.findById( userDetailsImpl.getId()).get();	
+  		Optional<AppConfig> appConfig = appConfigRepository.findById( (long) 1);
 		
-		int userPendingRetrieveCount = userGroupService.getPendingRecieveCount(user);	
+
+		
+		int userPendingRetrieveCount = userGroupService.getPendingRecieveCount(user,appConfig.get());	
 		
 		return Collections.singletonMap("count", userPendingRetrieveCount );
 
