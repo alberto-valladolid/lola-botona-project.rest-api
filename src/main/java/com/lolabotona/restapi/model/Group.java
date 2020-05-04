@@ -1,6 +1,7 @@
 package com.lolabotona.restapi.model;
 
 
+import java.sql.Time;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -64,17 +65,19 @@ public class Group {
     @Column(nullable = false)
     private boolean active;
     
+    private Time startTime; 
     
 	public Group() {
 	}
 
-	public Group(int capacity, String description, int showorder, int dayofweek,boolean active) {
+	public Group(int capacity, String description, int showorder, int dayofweek,boolean active, Time startTime) {
 		this.capacity = capacity;
 		this.description = description;
 		//this.orderShown = orderShown;
 		this.showorder = showorder;
 		this.dayofweek = dayofweek;
 		this.active = active; 	
+		this.startTime = startTime; 	
 
 	}
 	
@@ -85,6 +88,14 @@ public class Group {
 
 	public void setId(Long id) {
 		this.id = id;
+	}
+	
+	public Time getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(Time startTime) {
+		this.startTime = startTime;
 	}
 	
 

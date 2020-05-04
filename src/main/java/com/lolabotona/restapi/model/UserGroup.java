@@ -80,7 +80,7 @@ public class UserGroup implements Serializable {
     @Column(name="retrieved", columnDefinition="tinyint(1) default 0",nullable = false)
     private boolean retrieved ; //only for  retrieve
     
-    private Timestamp dateat; // for absence or retrieve 
+    private Timestamp dateat; // timestamp para almacenar cuando se ha generado una falta o una recuperación
     
     private Long absenceid; 
     

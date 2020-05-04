@@ -12,13 +12,14 @@ public class CalendarEvent {
 	private Long groupId; 
 	private boolean userAssits; 
 	private boolean isFull; 
-    private Timestamp timeOfDay; // 12:00  morning - 18:00 afternoon
+    private Timestamp timeOfDay; //timestamp para diferenciar las clases en un mismo día. 
     private String description; 
     private String users; 
+    private Timestamp startAt;  //para desactivar el grupo cuando esta fecha sea próxima. 
     
     
     
-    public CalendarEvent(boolean userAssits, boolean isFull, Timestamp timeOfDay,String description, Long groupId,String users) {
+    public CalendarEvent(boolean userAssits, boolean isFull, Timestamp timeOfDay,String description, Long groupId,String users, Timestamp startAt) {
    
     	this.groupId = groupId; 
     	this.userAssits = userAssits; 
@@ -26,6 +27,7 @@ public class CalendarEvent {
     	this.timeOfDay = timeOfDay; 
     	this.description = description;
     	this.users = users;
+    	this.startAt = startAt;
 		
     }
     

@@ -183,17 +183,17 @@ public class CalendarController {
 	  	    	    	isFeastDay = true; 
 	  	    	    }else {
 	  	    	    	isFeastDay = false; 
-	  	    	    }	  	    	    
+	  	    	    }	  	    
+	  	    	    
 	  	    	    
 	  	        	int dayOfWeek =  (start.getDayOfWeek().getValue() % 7) +1 ; 
 	  	        	
-	  	        	//find  current day Group
+	  	        	//find current day's events
 	      	  		List<Group> groups = groupRepository.findByDayofweekAndActiveOrderByShoworderAsc( dayOfWeek, true);
-	      	  			
-//	      	  		Set<CalendarEvent> events = new HashSet<CalendarEvent>();   es importante el orden y por eso se modifica a arraylist
+
 	      	  	    ArrayList<CalendarEvent> events = new ArrayList<CalendarEvent>();
       	  	        
-	      			//if (!groups.isEmpty()) {	      	  		
+	      		      	  		
 	
       				for (Group group : groups) { 
       		
@@ -208,6 +208,11 @@ public class CalendarController {
         				
           	    	    Date parsedDate1 = dateFormat.parse(c.get(Calendar.YEAR) + "-" + currMonthString +  "-" +start.getDayOfMonth() + " "  + hourEvent);          	    	    
           	    	    Timestamp timestampEvent = new java.sql.Timestamp(parsedDate1.getTime());  
+          	    	    	
+          	    	    String startEventString =  group.getStartTime().toString();
+          	    	    startEventString = startEventString.substring(0, startEventString.length() - 3);          	    	  
+          	    	    Date parsedStartDate = dateFormat.parse(c.get(Calendar.YEAR) + "-" + currMonthString +  "-" +start.getDayOfMonth() + " "  + startEventString);          	    	    
+        	    	    Timestamp startTimestamp = new java.sql.Timestamp(parsedStartDate.getTime());           	    	    
           	    	    
           	    	    
 	          	  		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user, group, "recurrent");
@@ -218,8 +223,10 @@ public class CalendarController {
 	          			List<UserGroup> abcensesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "absence", timestampEvent);
 	          			List<UserGroup> retrievesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "retrieve", timestampEvent);	          			
           	    	    
-          	    	    calendarEvent.setTimeOfDay(timestampEvent);
-          	    	    
+	          			System.out.println(startTimestamp);
+	          			
+	          			calendarEvent.setStartAt(startTimestamp);	          			
+          	    	    calendarEvent.setTimeOfDay(timestampEvent);          	    	    
 	          	    	calendarEvent.setGroupId(group.getId());
 	          	    	calendarEvent.setDescription(group.getDescription());
 	          	    	events.add(calendarEvent);   
@@ -234,8 +241,7 @@ public class CalendarController {
           	    	    }
       					
       				}
-	      				
-	      			//} 
+	      		
 	      				      			
 	  	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), true,  start.getDayOfWeek().getValue(),isFeastDay,events)); 
 	  	    	    
@@ -415,7 +421,9 @@ public class CalendarController {
 					
 				Optional<Group> group = groupRepository.findById(rewRetrieveRequest.getGroupid());				
 				
-				if (group.isPresent()) {
+				if (group.isPresent()) {			
+	
+					
 					
 					UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
 			  		User user = userRepository.findById( userDetailsImpl.getId()).get();

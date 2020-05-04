@@ -29,7 +29,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 
+import java.sql.Date;
 import java.sql.Time;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 //import java.util.Optional;
@@ -195,7 +199,6 @@ public class AdminController {
 		return ResponseEntity.ok(new MessageResponse("Usuario creado con éxito!"));
 	}
 	
-
 	
 	@GetMapping("/groups")
 	@PreAuthorize("hasRole('ADMIN')")
@@ -232,16 +235,37 @@ public class AdminController {
 	
 	@PreAuthorize("hasAnyRole('ADMIN')")
 	@PostMapping("/groups")
-	public ResponseEntity<?> addGroupByAdmin(@Valid @RequestBody NewGroupRequest newGroupRequest) {
+	public ResponseEntity<?> addGroupByAdmin(@Valid @RequestBody NewGroupRequest newGroupRequest) throws ParseException {
 		
 		List<Group> groups = new ArrayList<Group>();			
 		groups = groupRepository.findByDayofweekAndShoworder(newGroupRequest.getDayofweek(), newGroupRequest.getShoworder());
 				
-		System.out.println(groups);
 		
 		if ( groups.isEmpty()) { 
 			
-			Group group = new Group(newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getShoworder(),  newGroupRequest.getDayofweek(), newGroupRequest.isActived());
+			String stringTime; 
+			
+			if(newGroupRequest.getStartTimeHours() < 10) {
+				stringTime = "0"+  newGroupRequest.getStartTimeHours(); 
+			}else {
+				stringTime =  ""+ newGroupRequest.getStartTimeHours(); 
+			}
+			
+		    stringTime += ":"; 
+		    		
+			if(newGroupRequest.getStartTimeMins() < 10) {
+				stringTime += "0"+  newGroupRequest.getStartTimeMins(); 
+			}else {
+				stringTime += ""+  newGroupRequest.getStartTimeMins(); 
+			}
+			
+			
+			SimpleDateFormat dateSDF = new SimpleDateFormat("HH:mm");
+		
+			long ms = dateSDF.parse(stringTime).getTime();
+			Time startTime = new Time(ms);		
+				
+			Group group = new Group(newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getShoworder(),  newGroupRequest.getDayofweek(), newGroupRequest.isActive(), startTime);
 			groupRepository.save(group);
 			return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));			
 			
@@ -267,7 +291,7 @@ public class AdminController {
 
 	@PreAuthorize("hasAnyRole('ADMIN')")
     @PutMapping("/groups/{id}")
-    public ResponseEntity<?> updateGroup(@PathVariable("id") long id, @RequestBody Group newGroup) {
+    public ResponseEntity<?> updateGroup(@PathVariable("id") long id,@Valid @RequestBody NewGroupRequest newGroup) throws ParseException {
 		
 
 		
@@ -277,35 +301,45 @@ public class AdminController {
 			
 			List<Group> groups = new ArrayList<Group>();	
 			
-			groups = groupRepository.findByDayofweekAndShoworder(newGroup.getdayofweek(), newGroup.getshoworder());
+			groups = groupRepository.findByDayofweekAndShoworder(newGroup.getDayofweek(), newGroup.getShoworder());
 			
-			if (storedGroupData.get().getdayofweek() == newGroup.getdayofweek()  &&    newGroup.getshoworder() == storedGroupData.get().getshoworder())  {
+			if ( ( storedGroupData.get().getdayofweek() == newGroup.getDayofweek()  &&    newGroup.getShoworder() == storedGroupData.get().getshoworder() )  ||  groups.isEmpty())  {
 				
-		    	Group group = storedGroupData.get(); 		        
+				
+				String stringTime; 
+				
+				if(newGroup.getStartTimeHours() < 10) {
+					stringTime = "0"+  newGroup.getStartTimeHours(); 
+				}else {
+					stringTime =  ""+ newGroup.getStartTimeHours(); 
+				}
+				
+			    stringTime += ":"; 
+			    		
+				if(newGroup.getStartTimeMins() < 10) {
+					stringTime += "0"+  newGroup.getStartTimeMins(); 
+				}else {
+					stringTime += ""+  newGroup.getStartTimeMins(); 
+				}
+				
+				SimpleDateFormat dateSDF = new SimpleDateFormat("HH:mm");
+			
+				long ms = dateSDF.parse(stringTime).getTime();
+				Time startTime = new Time(ms);
+				
+				Group group = storedGroupData.get(); 
+				group.setStartTime(startTime);
 		    	group.setCapacity(newGroup.getCapacity());
 		    	group.setDescription(newGroup.getDescription());  
-		    	group.setshoworder(newGroup.getshoworder());
-		    	group.setdayofweek(newGroup.getdayofweek());
-		    	group.setActive(newGroup.getActive());  
-	            return new ResponseEntity<>(groupRepository.save(group), HttpStatus.OK);                   
-			      
-			}else {
+		    	group.setshoworder(newGroup.getShoworder());
+		    	group.setdayofweek(newGroup.getDayofweek());
+		    	group.setActive(newGroup.isActive());  
+	            return new ResponseEntity<>(groupRepository.save(group), HttpStatus.OK); 
+	              
+			}else {	
 				
-				if ( groups.isEmpty()) { 
-					
-			    	Group group = storedGroupData.get(); 		        
-			    	group.setCapacity(newGroup.getCapacity());
-			    	group.setDescription(newGroup.getDescription());  
-			    	group.setshoworder(newGroup.getshoworder());
-			    	group.setdayofweek(newGroup.getdayofweek());
-			    	group.setActive(newGroup.getActive());  
-		            return new ResponseEntity<>(groupRepository.save(group), HttpStatus.OK); 
-		              
-				}else {	
-					
-					return ResponseEntity.badRequest().body(new MessageResponse("Error: Ya existe un grupo en ese día y en ese orden"));
-					
-				}
+				return ResponseEntity.badRequest().body(new MessageResponse("Error: Ya existe un grupo en ese día y en ese orden"));
+				
 			}
 	
 		}
