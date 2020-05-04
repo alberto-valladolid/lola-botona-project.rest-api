@@ -59,9 +59,9 @@ public class UserGroup implements Serializable {
   
     @Column(length = 20)
     private String type; //recurrent, absence or  retrieve 
-	
 
-//	@JsonBackReference(value="user")
+
+//@JsonBackReference(value="user")
 //	@Id
 //    @ManyToOne
 //    @JoinColumn(name = "userid", referencedColumnName = "id")
@@ -80,7 +80,7 @@ public class UserGroup implements Serializable {
     @Column(name="retrieved", columnDefinition="tinyint(1) default 0",nullable = false)
     private boolean retrieved ; //only for  retrieve
     
-    private Timestamp dateat; // timestamp para almacenar cuando se ha generado una falta o una recuperación
+    private Timestamp dateat; // para saber la fecha de las faltas o recuperaciones. La fecha corresponde al día de la clase  y la hora al ordershow del grupo.
     
     private Long absenceid; 
     
