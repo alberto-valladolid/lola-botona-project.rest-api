@@ -9,16 +9,11 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.TimeZone;
 
 import javax.validation.Valid;
 
@@ -31,9 +26,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lolabotona.restapi.model.AppConfig;
@@ -42,7 +37,6 @@ import com.lolabotona.restapi.model.CalendarEvent;
 import com.lolabotona.restapi.model.FeastDay;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.model.UserGroup;
-import com.lolabotona.restapi.payload.request.ChgPwRequest;
 import com.lolabotona.restapi.payload.request.NewCalendarRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
 import com.lolabotona.restapi.model.Group;
@@ -54,7 +48,6 @@ import com.lolabotona.restapi.repository.UserRepository;
 import com.lolabotona.restapi.service.UserDetailsImpl;
 import com.lolabotona.restapi.service.UserGroupService;
 
-import ch.qos.logback.core.net.SyslogOutputStream;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -82,12 +75,14 @@ public class CalendarController {
 
 	@PreAuthorize("(hasAnyRole('USER') or hasRole('ADMIN'))")
 	@GetMapping("calendar/calendardata")
-    public ResponseEntity<?> getCalendarData() {
+    public ResponseEntity<?> getCalendarData(@RequestParam long requestMonth) {
 	  try {
-		  
+		  		  
 		  int postMonthExtraDays, preMonthExtraDays;		  
 	      List<CalendarDay> calendarDays = new ArrayList<CalendarDay>();      
-	      Calendar c = Calendar.getInstance();	      
+	      Calendar c = Calendar.getInstance();	
+	      c.add(Calendar.MONTH, (int) requestMonth);
+	      
 	      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	      String startString,endString; 
 	      LocalDate start,end; 
@@ -101,8 +96,7 @@ public class CalendarController {
     		  String previusMonthString; 
 
      		  if( c.get(Calendar.MONTH) == 0) {
-    
-        		   
+    		   
         			  startString = c.get(Calendar.YEAR)-1 + "-12-"+ (YearMonth.of(c.get(Calendar.YEAR)-1, 11).lengthOfMonth()+1-preMonthExtraDays);
                 	  endString =   c.get(Calendar.YEAR)-1 + "-12-"+  YearMonth.of(c.get(Calendar.YEAR)-1, 11).lengthOfMonth();
                 	  
@@ -158,16 +152,14 @@ public class CalendarController {
   		  User user = userRepository.findById( userDetailsImpl.getId()).get();
 
   		  
-  		  if (c.get(Calendar.MONTH) <10) {
+  		  if (c.get(Calendar.MONTH) <9) {
   			currMonthString = "0"+currMonthString; 
   		  }
   		  
   		  startString = c.get(Calendar.YEAR) + "-" + currMonthString +"-"+ "01";
       	  endString =   c.get(Calendar.YEAR) + "-" + currMonthString +"-"+  currMonthDays;
-      	  
-      	  
+      	        	  
       	  System.out.println(startString + " " + endString);
-      	  
       	  
       	  start = LocalDate.parse(startString);
       	  end = LocalDate.parse(endString); 
@@ -175,9 +167,8 @@ public class CalendarController {
       	  while (!start.isAfter(end)) {      		
     
 	  	        try {
-	  	        	
-	  	        	
-	  	    	    dayDate	= new GregorianCalendar(c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, start.getDayOfMonth()).getTime();
+	  	    	    //dayDate	= new GregorianCalendar(c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, start.getDayOfMonth()).getTime();
+	  	        	dayDate	= new GregorianCalendar(c.get(Calendar.YEAR), c.get(Calendar.MONTH), start.getDayOfMonth()).getTime();
 	  	    	    
 	  	    	    System.out.println(start.getDayOfMonth());
 	  	    	    
@@ -190,6 +181,7 @@ public class CalendarController {
 	  	    	    	isFeastDay = false; 
 	  	    	    }	  	    
 	  	    	    
+	  	    	    System.out.println(isFeastDay);
 	  	    	    
 	  	        	int dayOfWeek =  (start.getDayOfWeek().getValue() % 7) +1 ; 
 	  	        	
@@ -197,8 +189,7 @@ public class CalendarController {
 	      	  		List<Group> groups = groupRepository.findByDayofweekAndActiveOrderByShoworderAsc( dayOfWeek, true);
 
 	      	  	    ArrayList<CalendarEvent> events = new ArrayList<CalendarEvent>();
-      	  	        
-	      		      	  		
+      	  	          	  		
 	
       				for (Group group : groups) { 
       		
@@ -228,7 +219,7 @@ public class CalendarController {
 	          			List<UserGroup> abcensesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "absence", timestampEvent);
 	          			List<UserGroup> retrievesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "retrieve", timestampEvent);	          			
           	    	    
-	          			System.out.println(startTimestamp);
+	          			//System.out.println(startTimestamp);
 	          			
 	          			calendarEvent.setStartAt(startTimestamp);	          			
           	    	    calendarEvent.setTimeOfDay(timestampEvent);          	    	    
@@ -246,7 +237,6 @@ public class CalendarController {
           	    	    }
       					
       				}
-	      		
 	      				      			
 	  	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), true,  start.getDayOfWeek().getValue(),isFeastDay,events)); 
 	  	    	    
@@ -261,18 +251,19 @@ public class CalendarController {
 	  	  //iterate next month extra days
       	 postMonthExtraDays = CalendarDay.calcPostMonthExtraDays(c);
 	      
-    	  if(postMonthExtraDays!=0) {
-    		  
-    		  if(c.get(Calendar.MONTH) == 11) {   	
+    	 if(postMonthExtraDays!=0) {
+    		  			  
+		 	  if(c.get(Calendar.MONTH) == 11) {  
+			 
     			  startString = c.get(Calendar.YEAR)+1 + "-01-"+ "01";
             	  endString =   c.get(Calendar.YEAR)+1 + "-01-0"+ postMonthExtraDays  ;
     			  
     		  }else {
     			  String nextMonthString =   String.valueOf(c.get(Calendar.MONTH)+2);
-    			  if (c.get(Calendar.MONTH) <10) {
+    			  if (c.get(Calendar.MONTH) <8) {
+    				  System.out.println("entra donde no debería " +  c.get(Calendar.MONTH));
         			  nextMonthString = "0"+nextMonthString; 
         		  }
-    			  
     			  
     			  startString = c.get(Calendar.YEAR)+1 + "-"+nextMonthString+"-"+ "01";
             	  endString =   c.get(Calendar.YEAR)+1 + "-"+nextMonthString+"-0"+ postMonthExtraDays  ;
@@ -299,10 +290,6 @@ public class CalendarController {
 
     	  }
     	  
-    	  //return new ResponseEntity<>(calendarDays, HttpStatus.OK);	
-    	  
-    	  
-    	  //List<Object> response = new ArrayList <Object>();
     	 
 		 Optional<AppConfig> appConfig = appConfigRepository.findById( (long) 1);
 		 	
@@ -313,8 +300,6 @@ public class CalendarController {
 		 			.body(new MessageResponse("Error: La aplicación necesita autogenerar la configuración. El administrador debe acceder a la configuración de la aplicación."));
 		   
 		  } 
-			
-		  
     	  
     	  HashMap<String, Object> response = new HashMap<String , Object>();
     	  response.put("minsEditEvents", appConfig.get().getEventMinutes());
@@ -343,8 +328,6 @@ public class CalendarController {
 	    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	    
 		if(!userGroupService.containsDate(feastDays,dayDate)) {
-			
-
 				
 				UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 				User user = userRepository.findById( userDetailsImpl.getId()).get();
@@ -367,8 +350,7 @@ public class CalendarController {
 						
 						Date today = new Date();
 						String currMonthString; 
-						
-						//SIN TERMINAR, HAY QUE COMPROBAR LA FECHA DE LA PETICION ES POSTERIOR (O SUPERIOR) CON LA ACTUAL 
+		
 				
 						if(date.getMonthValue() < 10) {
 							currMonthString = "0"+date.getMonthValue(); 
@@ -376,19 +358,14 @@ public class CalendarController {
 							currMonthString = ""+date.getMonthValue(); 
 						}
 						
-					
+						System.out.println("el mes es: " + date.getMonthValue());
+						
 				   	    String startEventString =  group.get().getStartTime().toString();
           	    	    startEventString = startEventString.substring(0, startEventString.length() - 3);          	    	  
           	    	    Date parsedStartDate = dateFormat.parse(date.getYear() + "-" + currMonthString +  "-" +date.getDayOfMonth() + " "  + startEventString);          	    	    
         	    	    Timestamp startTimestamp = new java.sql.Timestamp(parsedStartDate.getTime());           	    	    
           	    	    
 						if(startTimestamp.after(today)) {
-							
-							System.out.println("evento" + startTimestamp + " posterior a ");
-							
-							System.out.println("hoy" + today);
-							
-							
 							
 							
 		          	  		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user, group.get(), "recurrent");
@@ -467,15 +444,8 @@ public class CalendarController {
 	    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	    
 		if(!userGroupService.containsDate(feastDays,dayDate)) {
-			
-//	        Calendar currentCalendar  = (Calendar)Calendar.getInstance(); 
-//	        currentCalendar.add(Calendar.MONTH, 2);
-	        
+				        
 			Date today = new Date();
-			
-	
-			
-	
 					
 				Optional<Group> group = groupRepository.findById(rewRetrieveRequest.getGroupid());				
 				
@@ -514,13 +484,6 @@ public class CalendarController {
     	    		
     	    	    
 					if(today.before(startTimestampMinusMins)) {
-					
-						System.out.println(today);
-						
-						System.out.println("antes que: ");
-						
-						System.out.println(startTimestampMinusMins);
-					
 					
 						
 						UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
