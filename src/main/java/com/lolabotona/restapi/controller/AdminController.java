@@ -6,19 +6,24 @@ import com.lolabotona.restapi.model.AppConfig;
 import com.lolabotona.restapi.model.FeastDay;
 import com.lolabotona.restapi.model.Group;
 import com.lolabotona.restapi.model.User;
+import com.lolabotona.restapi.model.UserGroup;
 import com.lolabotona.restapi.payload.request.SignupRequest;
 import com.lolabotona.restapi.payload.request.ChgAppConfig;
+import com.lolabotona.restapi.payload.request.NewAssistRequest;
 import com.lolabotona.restapi.payload.request.NewFeastDayRequest;
 import com.lolabotona.restapi.payload.request.NewGroupRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
 import com.lolabotona.restapi.repository.AppConfigRepository;
 import com.lolabotona.restapi.repository.FeastDayRepository;
 import com.lolabotona.restapi.repository.GroupRepository;
+import com.lolabotona.restapi.repository.UserGroupRepository;
 import com.lolabotona.restapi.repository.UserRepository;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 
@@ -31,11 +36,16 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 import java.sql.Date;
 import java.sql.Time;
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 //import java.util.Optional;
 import java.util.Optional;
 
@@ -70,6 +80,9 @@ public class AdminController {
 
 	@Autowired 
 	private UserRepository userRepository; 
+	
+	@Autowired 
+	private UserGroupRepository userGroupRepository; 
 	
 	@Autowired
 	private PasswordEncoder passwordEncoder; 
@@ -450,17 +463,157 @@ public class AdminController {
 		  
       } catch (Exception e) {
 	      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-  
+        
+      }
 
-    	    	
-  
-
-              
-    }
-
-	
 	
 	}
 	
+	
+
+	@PreAuthorize("(hasAnyRole('USER') or hasRole('ADMIN'))")
+	@GetMapping("events")
+//    public ResponseEntity<?> getCalendarData() {
+	//public ResponseEntity<?> getCalendarData(@RequestParam Map<String,String> requestParams)  throws Exception {
+	public ResponseEntity<?> getCalendarData(
+											@RequestParam("userId") String userId,
+											@RequestParam("groupId") String groupId,
+											@RequestParam("type") String type,
+//											@RequestParam("fromDate")  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)   LocalDateTime fromDate, 
+//											@RequestParam("toDate")  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)   LocalDateTime toDate
+											@RequestParam("fromDate") String fromDate,
+											@RequestParam("toDate") String toDate
+											)  throws Exception {
+		
+		
+        List<User> users = new ArrayList<User>();	
+        List<Group> groups = new ArrayList<Group>();
+        List<String> types = new ArrayList<String>();
+        
+        Timestamp fromDateTimestamp;
+        Timestamp toDateTimestamp;
+        
+        //DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd");
+        
+        String DATE_FORMAT = "yyyy-MM-dd";
+		
+		if(!userId.equals("null") ) {
+			
+			Optional<User> user  = userRepository.findById(Long.parseLong(userId));
+			
+			if(user.isPresent()) {
+				users.add(user.get()); 
+			}else {
+				return ResponseEntity.badRequest().body(new MessageResponse("Error: User with id " + userId + " not found"));
+			}
+			
+		}else {
+			 userRepository.findAll().forEach(users::add);	
+		}
+			
+					
+			
+		if(!groupId.equals("null") ) {
+			
+			Optional<Group> group  = groupRepository.findById(Long.parseLong(groupId));
+			
+			if(group.isPresent()) {
+				groups.add(group.get()); 
+			}else {
+				return ResponseEntity.badRequest().body(new MessageResponse("Error:  Group with id " + groupId + " not found"));
+			}
+			
+		}else {
+			groupRepository.findAll().forEach(groups::add);	
+		}
+			
+			
+		if(!type.equals("null") ) {
+			types.add(type);
+		}else {
+			types.add("absence");
+			types.add("retrieve");
+			types.add("recurrent");
+		}
+		
+		if(!fromDate.equals("null") ) {
+			
+	        try {
+	            DateFormat df = new SimpleDateFormat(DATE_FORMAT);
+	            df.setLenient(false);
+	            df.parse(fromDate);
+	            fromDate += " 00:00:00"; 
+	            fromDateTimestamp = Timestamp.valueOf(fromDate);
+	            //System.out.println("fecha fromdate valida");
+	            
+	        } catch (ParseException e) {
+	        	return ResponseEntity.badRequest().body(new MessageResponse("Error: From Date not valid " ));
+	        }
+			
+		}else {
+			return ResponseEntity.badRequest().body(new MessageResponse("Error: From Date not found " ));
+		}
+
+		if(!toDate.equals("null") ) {
+			
+	        try {
+	            DateFormat df = new SimpleDateFormat(DATE_FORMAT);
+	            df.setLenient(false);
+	            df.parse(toDate);
+	            toDate += " 00:00:00"; 
+	            toDateTimestamp = Timestamp.valueOf(toDate);
+	            //System.out.println("fecha toDate valida");
+	            
+	        } catch (ParseException e) {
+	        	return ResponseEntity.badRequest().body(new MessageResponse("Error: toDate not valid " ));
+	        }
+
+		}else {
+			return ResponseEntity.badRequest().body(new MessageResponse("Error: To date not valid "));
+		}
+		
+		List<UserGroup> userGroupList = userGroupRepository.findByGroupInAndUserInAndTypeInAndDateatBetweenOrderByDateat(groups, users,   types  , fromDateTimestamp, toDateTimestamp);
+			
+		if(types.contains("recurrent"))
+			userGroupList.addAll(userGroupRepository.findByGroupInAndUserInAndType(groups, users,"recurrent")) ;
+		
+		System.out.println("userGroupList " + userGroupList);
+		
+	    return new ResponseEntity<>(userGroupList, HttpStatus.OK);         
+	}
+	
+	
+	
+	
+	
+	
+	@PreAuthorize("hasAnyRole('ADMIN')")
+	@PostMapping("/events")
+	public ResponseEntity<?> addEvent(@Valid @RequestBody NewAssistRequest newAssistRequest) {
+		
+		//System.out.println(signUpRequest.getDate());
+		
+		System.out.println(newAssistRequest.getDate()== null);
+		
+		if((newAssistRequest.getType() == "absence" || newAssistRequest.getType() == "retrieve") && newAssistRequest.getDate() == null  ) {
+			return ResponseEntity.badRequest().body(new MessageResponse("Error: Es necesario seleccionar una fecha para las ausencias o las recuperaciones "));
+		}else {
+			return ResponseEntity.badRequest().body(new MessageResponse("Error: Todo ok "));
+		}
+		
+		
+		
+		
+//		if ( !feastDayRepository.existsByDate(newAssistRequest.getDate())) { 
+//			
+//			FeastDay feastDay = new FeastDay(newAssistRequest.getDate()); 
+//					feastDayRepository.save(feastDay);
+//			return ResponseEntity.ok(new MessageResponse("Asistencia creada con éxito!"));			
+//			
+//		}else {			
+//			return ResponseEntity.badRequest().body(new MessageResponse("Error: Ya existe ese día como festivo "));
+//		}			
+		
+	}	
 	
 }

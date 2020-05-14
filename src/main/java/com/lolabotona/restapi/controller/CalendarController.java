@@ -32,12 +32,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lolabotona.restapi.model.AppConfig;
-import com.lolabotona.restapi.model.CalendarDay;
-import com.lolabotona.restapi.model.CalendarEvent;
 import com.lolabotona.restapi.model.FeastDay;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.model.UserGroup;
 import com.lolabotona.restapi.payload.request.NewCalendarRequest;
+import com.lolabotona.restapi.payload.response.CalendarDayResponse;
+import com.lolabotona.restapi.payload.response.CalendarEventResponse;
 import com.lolabotona.restapi.payload.response.MessageResponse;
 import com.lolabotona.restapi.model.Group;
 import com.lolabotona.restapi.repository.AppConfigRepository;
@@ -79,7 +79,7 @@ public class CalendarController {
 	  try {
 		  		  
 		  int postMonthExtraDays, preMonthExtraDays;		  
-	      List<CalendarDay> calendarDays = new ArrayList<CalendarDay>();      
+	      List<CalendarDayResponse> calendarDays = new ArrayList<CalendarDayResponse>();      
 	      Calendar c = Calendar.getInstance();	
 	      c.add(Calendar.MONTH, (int) requestMonth);
 	      
@@ -90,7 +90,7 @@ public class CalendarController {
 	      
 
 	      //iterate previus month extra days	      
-	      preMonthExtraDays = CalendarDay.calcPreMonthExtraDays(c);
+	      preMonthExtraDays = CalendarDayResponse.calcPreMonthExtraDays(c);
 	      
     	  if(preMonthExtraDays!=0) {
     		  String previusMonthString; 
@@ -125,7 +125,7 @@ public class CalendarController {
 	      	        try {
 	      	        	
 	      	    	    
-	      	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), false, start.getDayOfWeek().getValue(),false, null) ); 
+	      	    	    calendarDays.add(new CalendarDayResponse(start.getDayOfMonth(), false, start.getDayOfWeek().getValue(),false, null) ); 
 	      	    	    
 	      	    	} catch(Exception e) { //this generic but you can control another types of exception
 	      	    	    // look the origin of excption 
@@ -179,21 +179,19 @@ public class CalendarController {
 	  	    	    	isFeastDay = true; 
 	  	    	    }else {
 	  	    	    	isFeastDay = false; 
-	  	    	    }	  	    
-	  	    	    
-	  	    	    System.out.println(isFeastDay);
+	  	    	    }	 
 	  	    	    
 	  	        	int dayOfWeek =  (start.getDayOfWeek().getValue() % 7) +1 ; 
 	  	        	
 	  	        	//find current day's events
 	      	  		List<Group> groups = groupRepository.findByDayofweekAndActiveOrderByShoworderAsc( dayOfWeek, true);
 
-	      	  	    ArrayList<CalendarEvent> events = new ArrayList<CalendarEvent>();
+	      	  	    ArrayList<CalendarEventResponse> events = new ArrayList<CalendarEventResponse>();
       	  	          	  		
 	
       				for (Group group : groups) { 
       		
-      					CalendarEvent calendarEvent = new CalendarEvent();      					
+      					CalendarEventResponse calendarEvent = new CalendarEventResponse();      					
       					String hourEvent; 
       					
       					if(group.getshoworder() < 10) {
@@ -238,7 +236,7 @@ public class CalendarController {
       					
       				}
 	      				      			
-	  	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), true,  start.getDayOfWeek().getValue(),isFeastDay,events)); 
+	  	    	    calendarDays.add(new CalendarDayResponse(start.getDayOfMonth(), true,  start.getDayOfWeek().getValue(),isFeastDay,events)); 
 	  	    	    
 	  	    	} catch(Exception e) { //this generic but you can control another types of exception
 	  	    	    // look the origin of excption 
@@ -249,7 +247,7 @@ public class CalendarController {
 
       	  
 	  	  //iterate next month extra days
-      	 postMonthExtraDays = CalendarDay.calcPostMonthExtraDays(c);
+      	 postMonthExtraDays = CalendarDayResponse.calcPostMonthExtraDays(c);
 	      
     	 if(postMonthExtraDays!=0) {
     		  			  
@@ -280,7 +278,7 @@ public class CalendarController {
         		  System.out.println(start.getDayOfMonth());
 	        	      
 	      	        try {
-	      	    	    calendarDays.add(new CalendarDay(start.getDayOfMonth(), false, start.getDayOfWeek().getValue(),false, null)); 	      	    	  
+	      	    	    calendarDays.add(new CalendarDayResponse(start.getDayOfMonth(), false, start.getDayOfWeek().getValue(),false, null)); 	      	    	  
 	      	    	} catch(Exception e) { //this generic but you can control another types of exception
 	      	    	    // look the origin of excption 
 	      	    	}
@@ -390,13 +388,22 @@ public class CalendarController {
 									
 									//Group group = new Group (newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getTimeofday(), newGroupRequest.getDayofweek(), newGroupRequest.isActived());
 									
-								    long absenceId = userGroupService.decreasePendingRecieveCount(user);							
-																	
-									UserGroup newUserGroup = new UserGroup(user, group.get(), "retrieve", true, rewRetrieveRequest.getDate(), absenceId); 
+									if(abcenseUserGroup.isPresent()) {
+										
+										userGroupRepository.delete(abcenseUserGroup.get());
+										return ResponseEntity.ok(new MessageResponse("Falta eliminada con éxito"));
+										
+									}else {
+										long absenceId = userGroupService.decreasePendingRecieveCount(user);							
+											
+										UserGroup newUserGroup = new UserGroup(user, group.get(), "retrieve", true, rewRetrieveRequest.getDate(), absenceId); 
+										
+										userGroupRepository.save(newUserGroup);
+										
+										return ResponseEntity.ok(new MessageResponse("Recuperación creada con éxito!"));
+									}
 									
-									userGroupRepository.save(newUserGroup);
-									
-									return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));
+								   
 									
 								}
 								

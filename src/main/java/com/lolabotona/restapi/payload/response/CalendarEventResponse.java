@@ -1,4 +1,4 @@
-package com.lolabotona.restapi.model;
+package com.lolabotona.restapi.payload.response;
 
 import java.sql.Timestamp;
 import lombok.Getter;
@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CalendarEvent {
+public class CalendarEventResponse {
 
 	private Long groupId; 
 	private boolean userAssits; 
@@ -19,7 +19,7 @@ public class CalendarEvent {
     
     
     
-    public CalendarEvent(boolean userAssits, boolean isFull, Timestamp timeOfDay,String description, Long groupId,String users, Timestamp startAt) {
+    public CalendarEventResponse(boolean userAssits, boolean isFull, Timestamp timeOfDay,String description, Long groupId,String users, Timestamp startAt) {
    
     	this.groupId = groupId; 
     	this.userAssits = userAssits; 
@@ -31,7 +31,7 @@ public class CalendarEvent {
 		
     }
     
-    public CalendarEvent() {
+    public CalendarEventResponse() {
     }
     
 	@Override

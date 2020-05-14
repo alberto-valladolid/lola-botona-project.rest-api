@@ -1,4 +1,4 @@
-package com.lolabotona.restapi.model;
+package com.lolabotona.restapi.payload.response;
 
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -15,21 +15,21 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CalendarDay {
+public class CalendarDayResponse {
 
 
 	private int monthDay; 	
 	private int weekDay; 
 	private boolean currentMonth; 
 //    private Set<CalendarEvent> events;
-	private ArrayList<CalendarEvent> events;
+	private ArrayList<CalendarEventResponse> events;
 	 
 	private boolean isFeastDay; 
 	
 	
 	
 	
-	public CalendarDay(int monthDay,boolean currentMonth,  int weekDay,boolean isFeastDay,ArrayList<CalendarEvent> events) {
+	public CalendarDayResponse(int monthDay,boolean currentMonth,  int weekDay,boolean isFeastDay,ArrayList<CalendarEventResponse> events) {
 		this.monthDay = monthDay;
 		this.weekDay = weekDay; 
 		this.currentMonth = currentMonth; 
