@@ -30,7 +30,7 @@ public class User {
 	private Long id; 
 	
 	@JsonManagedReference(value="user")
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user",cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserGroup> groupSet;
 	
     @NotBlank
