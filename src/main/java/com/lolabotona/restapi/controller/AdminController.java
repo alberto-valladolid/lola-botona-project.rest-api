@@ -18,6 +18,9 @@ import com.lolabotona.restapi.repository.FeastDayRepository;
 import com.lolabotona.restapi.repository.GroupRepository;
 import com.lolabotona.restapi.repository.UserGroupRepository;
 import com.lolabotona.restapi.repository.UserRepository;
+import com.lolabotona.restapi.service.UserGroupService;
+
+import ch.qos.logback.core.net.SyslogOutputStream;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,6 +47,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 //import java.util.Optional;
@@ -89,6 +93,9 @@ public class AdminController {
 	
 	@Autowired 
 	private GroupRepository groupRepository; 
+	
+	@Autowired 
+	private UserGroupService userGroupService; 
 	
 	
 	@PreAuthorize("hasAnyRole('ADMIN')")
@@ -583,7 +590,73 @@ public class AdminController {
 	}
 	
 	
-	
+    @DeleteMapping("/events/{id}")
+    public ResponseEntity<HttpStatus> deleteAssist(@PathVariable("id") long id) {   
+      try {
+    	  
+    	  Optional<UserGroup> userGroup = userGroupRepository.findById(id);
+    	  
+    	  if(userGroup.isPresent()) {
+    		  
+    		  if(userGroup.get().getType().equals("retrieve")) {
+    			    
+				  Optional<UserGroup> retrieveUserGroup = userGroupRepository.findById(userGroup.get().getAbsenceid());
+				  
+				  if (retrieveUserGroup.isPresent()) {		
+					  
+					  UserGroup retrieveUserGroupUpdate = retrieveUserGroup.get();
+				    
+					  retrieveUserGroupUpdate.setRetrieved(false);
+					  userGroupRepository.save(retrieveUserGroupUpdate);
+		            
+				  }
+				  
+    			  userGroupRepository.deleteById(id);
+    			  
+    			  return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    			  
+    			  
+    		  }else {
+    			  
+        		  Optional<User> user = userRepository.findById(userGroup.get().getuserid());
+        		  Optional<Group> group = groupRepository.findById(userGroup.get().getgroupid());
+       			  
+    			  if(userGroup.get().getType().equals("absence")) {
+    				   
+    				  Optional<UserGroup> retrieveUserGroup =  userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(),group.get() , "retrieve", userGroup.get().getDateat());
+    				  
+    				  if(retrieveUserGroup.isPresent()) {
+    					  userGroupRepository.delete(retrieveUserGroup.get());
+    				  }
+    				  
+    				  
+    				  userGroupRepository.deleteById(id);
+    				  
+    				  return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    				  
+    			  }else {
+    				  if(userGroup.get().getType().equals("recurrent")) {
+    					  
+    					  userGroupRepository.deleteAll(userGroupRepository.findByUserAndGroup(user.get(), group.get()));
+    					  
+    					  return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    					  
+        			  }else {
+        				  return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+        			  }
+    			  }
+    			  
+    		  }
+    		  
+    	  }else {
+    		  return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+    	  }  
+        
+      } catch (Exception e) {
+        return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+      }
+
+    }
 	
 	
 	
@@ -592,13 +665,173 @@ public class AdminController {
 	public ResponseEntity<?> addEvent(@Valid @RequestBody NewAssistRequest newAssistRequest) {
 		
 		//System.out.println(signUpRequest.getDate());
+
 		
-		System.out.println(newAssistRequest.getDate()== null);
-		
-		if((newAssistRequest.getType() == "absence" || newAssistRequest.getType() == "retrieve") && newAssistRequest.getDate() == null  ) {
-			return ResponseEntity.badRequest().body(new MessageResponse("Error: Es necesario seleccionar una fecha para las ausencias o las recuperaciones "));
+		if((newAssistRequest.getType().equals("absence") || newAssistRequest.getType().equals("retrieve") ) && newAssistRequest.getDate() == null  ) {
+			return ResponseEntity.badRequest().body(new MessageResponse("Error: Es necesario seleccionar una fecha para crear una ausencia o recuperacion"));
 		}else {
-			return ResponseEntity.badRequest().body(new MessageResponse("Error: Todo ok "));
+			
+			
+			Optional<Group> group = groupRepository.findById(newAssistRequest.getGroupId());	
+			Optional<User> user = userRepository.findById( newAssistRequest.getUserId());
+	
+			if( !group.isPresent() || !user.isPresent() ) {
+				return ResponseEntity.badRequest().body(new MessageResponse("Error: UserId o el groupId no encontrados "));
+			}else {
+				
+				Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user.get(), group.get(), "recurrent");
+				
+				List<UserGroup> recurrentsGroup = userGroupRepository.findByGroupAndType( group.get(), "recurrent");
+				
+				if(newAssistRequest.getType().equals("recurrent")) {
+					
+					
+					if( group.get().getCapacity() <= recurrentsGroup.size() ) {
+						
+						return ResponseEntity.badRequest().body(new MessageResponse("Error: Grupo completo "));
+						
+					}else {
+					
+						if(recurrentUserGroup.isPresent()) {
+							return ResponseEntity.badRequest().body(new MessageResponse("Error: El usuario ya se encuentra asignado a ese grupo" ));
+						}else{
+							UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "recurrent", false, null ,null); 
+							System.out.println(newUserGroup);						
+							userGroupRepository.save(newUserGroup);	
+							
+							return ResponseEntity.ok(new MessageResponse("Asistencia recurrent creada con éxito!"));
+						}
+						
+					}
+				}else {
+					
+					
+					Calendar requestDateCal = Calendar.getInstance();
+					
+					requestDateCal.setTime(newAssistRequest.getDate());
+					
+					requestDateCal.add(Calendar.HOUR_OF_DAY, 12); 
+					
+					requestDateCal.add(Calendar.MINUTE, group.get().getshoworder()); 
+					
+					Timestamp timestampDate = new java.sql.Timestamp(requestDateCal.getTimeInMillis());
+					
+					
+	      			List<UserGroup> abcensesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group.get(), "absence", timestampDate);
+	      			List<UserGroup> retrievesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group.get(), "retrieve", timestampDate);
+					
+					
+								  		
+	      			Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(), group.get(), "absence", timestampDate);
+	      			Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(), group.get(), "retrieve", timestampDate);
+											
+						if(newAssistRequest.getType().equals("absence")) {
+							
+							System.out.println(userGroupService.userAssists(group.get(), timestampDate, user.get(), recurrentUserGroup, abcenseUserGroup, retrieveUserGroup));
+							
+							if (userGroupService.userAssists(group.get(), timestampDate, user.get(), recurrentUserGroup, abcenseUserGroup, retrieveUserGroup)) {	
+												
+								
+								Optional<UserGroup> existRetrieve = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user.get(), group.get(), "retrieve", timestampDate);			
+								
+								if(existRetrieve.isPresent()) {
+									
+							        try {
+							        
+							        	userGroupRepository.deleteById(existRetrieve.get().getId());
+							        	
+							        	Optional<UserGroup> absenceGroup = userGroupRepository.findById(existRetrieve.get().getAbsenceid());
+							        	
+							    		if (absenceGroup.isPresent()) {
+							
+							    			UserGroup currUserGroup  = absenceGroup.get(); 
+							    			currUserGroup.setRetrieved(false);
+							    			userGroupRepository.save(currUserGroup); 			
+							    			
+							    		} 		
+							        	
+							        } catch (Exception e) {
+							        	return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+							        }
+							  		
+								}else {
+									
+									UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "absence", false, timestampDate,null); 			
+									System.out.println(newUserGroup);
+									userGroupRepository.save(newUserGroup);							
+								}						
+								
+								return ResponseEntity.ok(new MessageResponse("Ausencia creada con éxito!"));
+								
+							}else {
+								return ResponseEntity.badRequest().body(new MessageResponse("Error: Error al crear la ausencia, el usuario no asiste a clase ese día "  ));
+							}	
+							
+						}else {
+							
+							if(newAssistRequest.getType().equals("retrieve")) {
+								
+								
+								if (userGroupService.userAssists(group.get(), timestampDate, user.get(), recurrentUserGroup, abcenseUserGroup, retrieveUserGroup)) {
+									return ResponseEntity
+											.badRequest()
+											.body(new MessageResponse("Error: El usuario ya  asiste a clase ese día"));
+								}else {									
+
+									
+									if (userGroupService.eventIsFull(group.get(), timestampDate, recurrentsGroup, abcensesGroup, retrievesGroup)) {
+										return ResponseEntity
+												.badRequest()
+												.body(new MessageResponse("Error: El grupo está completo "));
+									}else {
+										
+									
+										Optional<AppConfig> appConfig = appConfigRepository.findById( (long) 1);
+										
+										if (!appConfig.isPresent()) {
+										  
+											return ResponseEntity
+													.badRequest()
+													.body(new MessageResponse("Error: La aplicación necesita autogenerar la configuración. El administrador debe acceder a la configuración de la aplicación."));
+										  
+										} 
+										
+										if(userGroupService.getPendingRecieveCount(user.get(),appConfig.get()) > 0) {	
+											
+											long absenceId = userGroupService.decreasePendingRecieveCount(user.get());							
+											
+											UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "retrieve", true, timestampDate, absenceId); 
+											
+											userGroupRepository.save(newUserGroup);
+											
+											return ResponseEntity.ok(new MessageResponse("Recuperación creada con éxito!"));
+											
+										}else {
+											return ResponseEntity
+													.badRequest()
+													.body(new MessageResponse("Error: El usuario no tiene clases pendientes."));
+										  
+										}
+									   
+										
+									}
+									
+								}
+								
+								
+							}else {
+								return ResponseEntity.badRequest().body(new MessageResponse("Error: Type debe ser recurrent, retrieve o absence "  ));
+							}
+							
+							
+						}
+						
+						
+				}
+				
+			}
+			
+			
 		}
 		
 		

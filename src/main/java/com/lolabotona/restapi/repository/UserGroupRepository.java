@@ -29,6 +29,10 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, Long> {
 	Optional<UserGroup> findByUserAndGroupAndType(User user, Group group, String type);	
 	Optional<UserGroup> findByUserAndGroupAndTypeAndDateat(User user, Group group, String type,Timestamp dateAt);
 	
+	
+	//List<UserGroup> findByGroupAndUserAndType(Group group,User user,  String type);	
+	List<UserGroup> findByUserAndGroup(User user, Group group);	
+	
 	List<UserGroup> findByGroupAndType( Group group, String type );
 	List<UserGroup> findByGroupAndTypeAndDateat( Group group, String type,Timestamp dateAt );
 		
