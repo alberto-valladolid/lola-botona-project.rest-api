@@ -1,4 +1,4 @@
-package com.lolabotona.restapi.config;
+package com.zerotoproduction.bucketlist;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -11,13 +11,13 @@ import javax.sql.DataSource;
 @Configuration
 public class DatabaseConfig {
 
-    @Value("${spring.datasource.url}")
+    @Value("mysql://b8c5d669134b02:4fb1f714@us-cdbr-east-06.cleardb.net/heroku_49fb359c69b4ebf?reconnect=true")
     private String dbUrl;
 
     @Bean
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("mysql://bcb8795a7f5b8d:815838d8@us-cdbr-east-06.cleardb.net/heroku_e5e1c7c98d8ce9f?reconnect=true\r\n");
+        config.setJdbcUrl(dbUrl);
         return new HikariDataSource(config);
     }
 }
