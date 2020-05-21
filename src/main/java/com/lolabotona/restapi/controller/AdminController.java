@@ -402,13 +402,13 @@ public class AdminController {
 	
 	@PreAuthorize("hasAnyRole('ADMIN')")
 	@PostMapping("/feast-days")
-	public ResponseEntity<?> addFeastDay(@Valid @RequestBody NewFeastDayRequest signUpRequest) {
+	public ResponseEntity<?> addFeastDay(@Valid @RequestBody NewFeastDayRequest newFeastDayRequest) {
 		
 		//System.out.println(signUpRequest.getDate());
 		
-		if ( !feastDayRepository.existsByDate(signUpRequest.getDate())) { 
+		if ( !feastDayRepository.existsByDate(newFeastDayRequest.getDate())) { 
 			
-			FeastDay feastDay = new FeastDay(signUpRequest.getDate()); 
+			FeastDay feastDay = new FeastDay(newFeastDayRequest.getDate()); 
 					feastDayRepository.save(feastDay);
 			return ResponseEntity.ok(new MessageResponse("Festivo creado con éxito!"));			
 			
