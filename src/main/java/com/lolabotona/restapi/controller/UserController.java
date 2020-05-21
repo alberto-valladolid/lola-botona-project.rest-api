@@ -48,8 +48,8 @@ public class UserController {
 	@Autowired
 	private PasswordEncoder passwordEncoder; 
 
-	@GetMapping("/all")
-	@PreAuthorize("hasRole('USER')  or hasRole('ADMIN')")
+	@GetMapping("/test/all")
+
 	public String allAccess() {
 		return "Landing usuarios invitados";
 	}
