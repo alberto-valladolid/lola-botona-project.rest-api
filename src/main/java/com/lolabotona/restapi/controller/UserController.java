@@ -27,6 +27,7 @@ import com.lolabotona.restapi.service.UserGroupService;
 import com.lolabotona.restapi.model.AppConfig;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.payload.request.ChgPwRequest;
+import com.lolabotona.restapi.payload.request.SignupRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -49,10 +50,52 @@ public class UserController {
 	private PasswordEncoder passwordEncoder; 
 
 	@GetMapping("/test/all")
-
 	public String allAccess() {
 		return "Landing usuarios invitados";
 	}
+
+
+
+
+	@PostMapping("/test/all")
+	public ResponseEntity<?> addUser(@Valid @RequestBody SignupRequest signUpRequest) {
+		if (userRepository.existsByUsername(signUpRequest.getUsername())) {
+			return ResponseEntity
+					.badRequest()
+					.body(new MessageResponse("Error: Ya existe un usuario con ese teléfono!"));
+		}
+
+		// Create new user's account
+		User user = new User(signUpRequest.getUsername(), 
+							 signUpRequest.getRole(),					
+							 passwordEncoder.encode(signUpRequest.getPassword()),
+							 signUpRequest.getName());
+
+		String requestRole = signUpRequest.getRole();
+
+
+		if (requestRole == null) {
+
+				new RuntimeException("Error: Role is required.");
+		
+		}
+		
+		user.setRoles(requestRole);
+		userRepository.save(user);
+
+		return ResponseEntity.ok(new MessageResponse("Usuario creado con éxito!"));
+	}
+
+
+
+
+
+
+
+
+
+
+
 	
 	@GetMapping("/user")
 	@PreAuthorize("(hasRole('USER')  or hasRole('ADMIN'))")
