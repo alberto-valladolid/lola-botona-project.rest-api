@@ -57,43 +57,6 @@ public class UserController {
 
 
 
-	@PostMapping("/test/all")
-	public ResponseEntity<?> addUser(@Valid @RequestBody SignupRequest signUpRequest) {
-		if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-			return ResponseEntity
-					.badRequest()
-					.body(new MessageResponse("Error: Ya existe un usuario con ese teléfono!"));
-		}
-
-		// Create new user's account
-		User user = new User(signUpRequest.getUsername(), 
-							 signUpRequest.getRole(),					
-							 passwordEncoder.encode(signUpRequest.getPassword()),
-							 signUpRequest.getName());
-
-		String requestRole = signUpRequest.getRole();
-
-
-		if (requestRole == null) {
-
-				new RuntimeException("Error: Role is required.");
-		
-		}
-		
-		user.setRoles(requestRole);
-		userRepository.save(user);
-
-		return ResponseEntity.ok(new MessageResponse("Usuario creado con éxito!"));
-	}
-
-
-
-
-
-
-
-
-
 
 
 	
