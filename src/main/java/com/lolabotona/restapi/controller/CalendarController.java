@@ -14,6 +14,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -77,7 +78,24 @@ public class CalendarController {
 	@GetMapping("calendar/calendardata")
     public ResponseEntity<?> getCalendarData(@RequestParam long requestMonth) {
 	  try {
-		  		  
+		  System.out.println(" ");
+		  System.out.println("START");
+		  System.out.println(" ");
+		  
+		  UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
+  		  User user = userRepository.findById( userDetailsImpl.getId()).get();
+  		  
+	      List<FeastDay> feastDays = new ArrayList<FeastDay>();    
+	      feastDayRepository.findAll().forEach(feastDays::add);
+	      
+	      
+	      List<UserGroup> allUserGroups =  new ArrayList<UserGroup>(); 	
+	      userGroupRepository.findAll().forEach(allUserGroups::add);
+	      
+	      List<Group> allGroups = groupRepository.findByActiveOrderByShoworderAsc(true);
+	      
+	      System.out.println(allUserGroups);
+		  
 		  int postMonthExtraDays, preMonthExtraDays;		  
 	      List<CalendarDayResponse> calendarDays = new ArrayList<CalendarDayResponse>();      
 	      Calendar c = Calendar.getInstance();	
@@ -86,8 +104,7 @@ public class CalendarController {
 	      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	      String startString,endString; 
 	      LocalDate start,end; 
-	      
-	      
+	      	      
 
 	      //iterate previus month extra days	      
 	      preMonthExtraDays = CalendarDayResponse.calcPreMonthExtraDays(c);
@@ -136,8 +153,6 @@ public class CalendarController {
 
     	  }
     	  
-  		
-    	  
       	  //iterate current month days
     	  int currMonthDays;     	  
 		  YearMonth yearMonthObject = YearMonth.of(c.get(Calendar.YEAR), c.get(Calendar.MONTH)+1);	  
@@ -145,13 +160,7 @@ public class CalendarController {
   		  String currMonthString =   String.valueOf(c.get(Calendar.MONTH)+1);
   		  Date dayDate; 
   		  boolean isFeastDay;  
-  		  
-
-  		  
-		  UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
-  		  User user = userRepository.findById( userDetailsImpl.getId()).get();
-
-  		  
+  		   
   		  if (c.get(Calendar.MONTH) <9) {
   			currMonthString = "0"+currMonthString; 
   		  }
@@ -172,8 +181,7 @@ public class CalendarController {
 	  	    	    
 	  	    	    System.out.println(start.getDayOfMonth());
 	  	    	    
-	      		    List<FeastDay> feastDays = new ArrayList<FeastDay>();    
-	      		    feastDayRepository.findAll().forEach(feastDays::add);	
+	
 	  	    	    
 	  	    	    if(userGroupService.containsDate(feastDays, dayDate)) {	      	    	 
 	  	    	    	isFeastDay = true; 
@@ -184,12 +192,22 @@ public class CalendarController {
 	  	        	int dayOfWeek =  (start.getDayOfWeek().getValue() % 7) +1 ; 
 	  	        	
 	  	        	//find current day's events
-	      	  		List<Group> groups = groupRepository.findByDayofweekAndActiveOrderByShoworderAsc( dayOfWeek, true);
+	      	  		//List<Group> groups = groupRepository.findByDayofweekAndActiveOrderByShoworderAsc( dayOfWeek, true);
 
 	      	  	    ArrayList<CalendarEventResponse> events = new ArrayList<CalendarEventResponse>();
-      	  	          	  		
+	      	  	    
+	      	  	    
+		      	  	List<Group> todayGroups =  allGroups.stream()
+		      	  	    .filter(g -> g.getdayofweek() == dayOfWeek).collect(Collectors.toList());
+	      	  	    
+//      	  	    System.out.println(" ");
+//  	  	        System.out.println("Eventos del dia");  	  	        	
+//	  	        	System.out.println(todayGroups);
+//	  	        	System.out.println(" ");
+      	  	    
 	
-      				for (Group group : groups) { 
+      				//for (Group group : groups) {
+      				for (Group group : todayGroups) { 
       		
       					CalendarEventResponse calendarEvent = new CalendarEventResponse();      					
       					String hourEvent; 
@@ -208,16 +226,41 @@ public class CalendarController {
           	    	    Date parsedStartDate = dateFormat.parse(c.get(Calendar.YEAR) + "-" + currMonthString +  "-" +start.getDayOfMonth() + " "  + startEventString);          	    	    
         	    	    Timestamp startTimestamp = new java.sql.Timestamp(parsedStartDate.getTime());           	    	    
           	    	    
-          	    	    
-	          	  		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user, group, "recurrent");
-	          			Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group, "absence", timestampEvent);
-	          			Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group, "retrieve", timestampEvent);	          	    	    
+        	    	    
+        	    	    List<UserGroup> recurrentsGroup =  allUserGroups.stream()  		      	  	  
+       		      	  	    .filter(x -> (x.getGroup().equals(group) && x.getType().equals("recurrent") ))  
+        		      	  	.collect(Collectors.toList());
+        	    	    
+        	    	    List<UserGroup> abcensesGroup =  allUserGroups.stream()  		      	  	  
+           		      	  	    .filter(x -> (x.getGroup().equals(group) && x.getType().equals("absence") && x.getDateat().equals(timestampEvent) ))  
+            		      	  	.collect(Collectors.toList());
+        	    	   
+        	     	    List<UserGroup> retrievesGroup =  allUserGroups.stream()  		      	  	  
+           		      	  	    .filter(x -> (x.getGroup().equals(group) && x.getType().equals("retrieve") && x.getDateat().equals(timestampEvent) ))  
+            		      	  	.collect(Collectors.toList());
+        	     	    
+        	     	    
+        	     	    Optional<UserGroup> recurrentUserGroup = recurrentsGroup.stream()  		      	  	  
+          		      	  	    .filter(x -> (x.getUser().equals(user)  ))
+    	     	   				.findFirst();
+        	     	    
+        	     	    Optional<UserGroup> abcenseUserGroup = abcensesGroup.stream()  		      	  	  
+         		      	  	    .filter(x -> (x.getUser().equals(user)  ))
+         		      	  	    .findFirst();
+        	     	   
+        	     	    Optional<UserGroup> retrieveUserGroup = retrievesGroup.stream()  		      	  	  
+        		      	  	    .filter(x -> (x.getUser().equals(user)  ))
+        		      	  	    .findFirst();
+        	     	    
 	          			
-	          			List<UserGroup> recurrentsGroup = userGroupRepository.findByGroupAndType( group, "recurrent");
-	          			List<UserGroup> abcensesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "absence", timestampEvent);
-	          			List<UserGroup> retrievesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "retrieve", timestampEvent);	          			
-          	    	    
-	          			//System.out.println(startTimestamp);
+	          			//List<UserGroup> recurrentsGroup = userGroupRepository.findByGroupAndType( group, "recurrent");
+	          			//List<UserGroup> abcensesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "absence", timestampEvent);
+	          			//List<UserGroup> retrievesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "retrieve", timestampEvent);	 
+        	     	    
+	          	  		//Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user, group, "recurrent");
+//	          			Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group, "absence", timestampEvent);
+//	          			Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group, "retrieve", timestampEvent);
+      	     	    
 	          			
 	          			calendarEvent.setStartAt(startTimestamp);	          			
           	    	    calendarEvent.setTimeOfDay(timestampEvent);          	    	    
@@ -259,7 +302,6 @@ public class CalendarController {
     		  }else {
     			  String nextMonthString =   String.valueOf(c.get(Calendar.MONTH)+2);
     			  if (c.get(Calendar.MONTH) <8) {
-    				  System.out.println("entra donde no debería " +  c.get(Calendar.MONTH));
         			  nextMonthString = "0"+nextMonthString; 
         		  }
     			  
@@ -286,8 +328,7 @@ public class CalendarController {
         	      start = start.plusDays(1);
         	  }       	  
 
-    	  }
-    	  
+    	  }    	  
     	 
 		 Optional<AppConfig> appConfig = appConfigRepository.findById( (long) 1);
 		 	
@@ -319,6 +360,9 @@ public class CalendarController {
 	
 	    List<FeastDay> feastDays = new ArrayList<FeastDay>();    
 	    feastDayRepository.findAll().forEach(feastDays::add);	
+	    
+	    List<UserGroup> allUserGroups =  new ArrayList<UserGroup>(); 	
+	    userGroupRepository.findAll().forEach(allUserGroups::add);
 	    
 	    LocalDate date = Instant.ofEpochMilli(rewRetrieveRequest.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDate();  	    
 	    Date dayDate	= new GregorianCalendar(date.getYear(), date.getMonthValue()-1, date.getDayOfMonth()).getTime();
@@ -366,13 +410,40 @@ public class CalendarController {
 						if(startTimestamp.after(today)) {
 							
 							
-		          	  		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user, group.get(), "recurrent");
-		          			Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "absence", rewRetrieveRequest.getDate());
-		          			Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "retrieve", rewRetrieveRequest.getDate());
+	        	    	    List<UserGroup> recurrentsGroup =  allUserGroups.stream()  		      	  	  
+	           		      	  	    .filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("recurrent") ))  
+	            		      	  	.collect(Collectors.toList());
+	            	    	    
+            	    	    List<UserGroup> abcensesGroup =  allUserGroups.stream()  		      	  	  
+               		      	  	    .filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("absence") && x.getDateat().equals(rewRetrieveRequest.getDate()) ))  
+                		      	  	.collect(Collectors.toList());
+            	    	   
+            	     	    List<UserGroup> retrievesGroup =  allUserGroups.stream()  		      	  	  
+               		      	  	    .filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("retrieve") && x.getDateat().equals(rewRetrieveRequest.getDate()) ))  
+                		      	  	.collect(Collectors.toList());
+            	     	    
+            	     	    
+            	     	    
+            	     	    Optional<UserGroup> recurrentUserGroup = recurrentsGroup.stream()  		      	  	  
+              		      	  	    .filter(x -> (x.getUser().equals(user)  ))
+        	     	   				.findFirst();
+            	     	    
+            	     	    Optional<UserGroup> abcenseUserGroup = abcensesGroup.stream()  		      	  	  
+             		      	  	    .filter(x -> (x.getUser().equals(user)  ))
+             		      	  	    .findFirst();
+            	     	   
+            	     	    Optional<UserGroup> retrieveUserGroup = retrievesGroup.stream()  		      	  	  
+            		      	  	    .filter(x -> (x.getUser().equals(user)  ))
+            		      	  	    .findFirst();
 							
-		         			List<UserGroup> recurrentsGroup = userGroupRepository.findByGroupAndType( group.get(), "recurrent");
-		          			List<UserGroup> abcensesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group.get(), "absence", rewRetrieveRequest.getDate());
-		          			List<UserGroup> retrievesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group.get(), "retrieve", rewRetrieveRequest.getDate());
+							
+//		          	  		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user, group.get(), "recurrent");
+//		          			Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "absence", rewRetrieveRequest.getDate());
+//		          			Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "retrieve", rewRetrieveRequest.getDate());
+//							
+//		         			List<UserGroup> recurrentsGroup = userGroupRepository.findByGroupAndType( group.get(), "recurrent");
+//		          			List<UserGroup> abcensesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group.get(), "absence", rewRetrieveRequest.getDate());
+//		          			List<UserGroup> retrievesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group.get(), "retrieve", rewRetrieveRequest.getDate());
 							
 							if (userGroupService.userAssists(group.get(), rewRetrieveRequest.getDate(), user, recurrentUserGroup, abcenseUserGroup, retrieveUserGroup)) {
 								return ResponseEntity
@@ -401,9 +472,7 @@ public class CalendarController {
 										userGroupRepository.save(newUserGroup);
 										
 										return ResponseEntity.ok(new MessageResponse("Recuperación creada con éxito!"));
-									}
-									
-								   
+									}	
 									
 								}
 								
@@ -425,9 +494,8 @@ public class CalendarController {
 					return ResponseEntity
 							.badRequest()
 							.body(new MessageResponse("No dispone de clases pendientes"));
-				}				
+				}		
 				
-	
 		
   	    }else {
 			  return ResponseEntity
@@ -436,8 +504,7 @@ public class CalendarController {
   	    }
 		
 	}
-	
-	
+		
 	@PreAuthorize("(hasAnyRole('USER') or hasRole('ADMIN')) ")
 	@PostMapping("calendar/createAbsence")
 	public ResponseEntity<?> createAbsence(@Valid @RequestBody NewCalendarRequest rewRetrieveRequest, Authentication authentication) throws ParseException {
@@ -445,11 +512,14 @@ public class CalendarController {
 	    List<FeastDay> feastDays = new ArrayList<FeastDay>();    
 	    feastDayRepository.findAll().forEach(feastDays::add);	
 	    
+	    List<UserGroup> allUserGroups =  new ArrayList<UserGroup>(); 	
+	    userGroupRepository.findAll().forEach(allUserGroups::add);
+	    		
 	    LocalDate date = Instant.ofEpochMilli(rewRetrieveRequest.getDate().getTime()).atZone(ZoneId.systemDefault()).toLocalDate();  	    
 	    Date dayDate	= new GregorianCalendar(date.getYear(), date.getMonthValue()-1, date.getDayOfMonth()).getTime();
 	    
 	    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-	    
+
 		if(!userGroupService.containsDate(feastDays,dayDate)) {
 				        
 			Date today = new Date();
@@ -492,27 +562,54 @@ public class CalendarController {
     	    	    
 					if(today.before(startTimestampMinusMins)) {
 					
-						
+					
 						UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
 				  		User user = userRepository.findById( userDetailsImpl.getId()).get();
+				  		
+				  		
+				  		
+        	     	    Optional<UserGroup> recurrentUserGroup =  allUserGroups.stream()  		      	  	  
+        	     	    		.filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("recurrent") && x.getUser().equals(user)))  
+    	     	   				.findFirst();
+        	     	    
+        	     	    Optional<UserGroup> abcenseUserGroup = allUserGroups.stream()  		      	  	  
+        	     	    		 .filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("absence") && x.getDateat().equals(rewRetrieveRequest.getDate()) && x.getUser().equals(user) ))  
+         		      	  	    .findFirst();
+        	     	   
+        	     	    Optional<UserGroup> retrieveUserGroup = allUserGroups.stream()  		      	  	  
+        	     	    		.filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("retrieve") && x.getDateat().equals(rewRetrieveRequest.getDate()) && x.getUser().equals(user) ))  
+        		      	  	    .findFirst();
 						
-	          	  		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user, group.get(), "recurrent");
-	          			Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "absence", rewRetrieveRequest.getDate());
-	          			Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "retrieve", rewRetrieveRequest.getDate());
+        	     	    
+//	          	  		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user, group.get(), "recurrent");
+//	          			Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "absence", rewRetrieveRequest.getDate());
+//	          			Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "retrieve", rewRetrieveRequest.getDate());
 						
+	          			
+        	     	   
+	          			
+	          			
 						if (userGroupService.userAssists(group.get(), rewRetrieveRequest.getDate(), user, recurrentUserGroup, abcenseUserGroup, retrieveUserGroup)) {						
-				
-							
-							Optional<UserGroup> existRetrieve = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "retrieve", rewRetrieveRequest.getDate());
 		
 							
-							if(existRetrieve.isPresent()) {
+		
+							
+							//Optional<UserGroup> existRetrieve = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "retrieve", rewRetrieveRequest.getDate());
+		
+							
+							if(retrieveUserGroup.isPresent()) {
 								
 						        try {
 						        
-						        	userGroupRepository.deleteById(existRetrieve.get().getId());
+						        	userGroupRepository.deleteById(retrieveUserGroup.get().getId());
 						        	
-						        	Optional<UserGroup> absenceGroup = userGroupRepository.findById(existRetrieve.get().getAbsenceid());
+						        	
+						            Optional<UserGroup> absenceGroup =  allUserGroups.stream()  		      	  	  
+			        	     	    		.filter(x -> (x.getId() == retrieveUserGroup.get().getAbsenceid()))  
+			    	     	   				.findFirst();
+			        	     	    
+						   
+						        	//Optional<UserGroup> absenceGroup = userGroupRepository.findById(retrieveUserGroup.get().getAbsenceid());
 						        	
 						    		if (absenceGroup.isPresent()) {
 						    			
@@ -520,7 +617,7 @@ public class CalendarController {
 						    			UserGroup currUserGroup  = absenceGroup.get(); 
 						    			currUserGroup.setRetrieved(false);
 						    			userGroupRepository.save(currUserGroup); 			
-						    			
+						    		
 						    		} 		
 						        	
 						        } catch (Exception e) {

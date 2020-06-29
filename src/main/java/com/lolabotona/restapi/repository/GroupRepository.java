@@ -15,4 +15,6 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 	
 	List<Group> findByDayofweekAndActiveOrderByShoworderAsc( int dayOfWeek, boolean active);
 	
+	List<Group> findByActiveOrderByShoworderAsc( boolean active);
+	
 }
