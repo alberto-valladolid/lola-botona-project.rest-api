@@ -35,16 +35,16 @@ public class UserGroupService  {
 		
 		
 		//Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
-		Calendar futureCalendar = Calendar.getInstance();
-		futureCalendar.add(Calendar.YEAR, 1);
-		Timestamp futureTimestamp = new Timestamp(futureCalendar.getTimeInMillis());			
+		Calendar toCalendar = Calendar.getInstance();
+		toCalendar.add(Calendar.YEAR, 1);
+		Timestamp toTimestamp = new Timestamp(toCalendar.getTimeInMillis());			
 		
-		Calendar aMonthAgoCalendar = Calendar.getInstance();
-		aMonthAgoCalendar.add(Calendar.DAY_OF_YEAR, -appConfig.getAbsenceDays());
-		Timestamp aMonthAgoTimestamp = new Timestamp(aMonthAgoCalendar.getTimeInMillis());	
+		Calendar fromCalendar = Calendar.getInstance();
+		fromCalendar.add(Calendar.DAY_OF_YEAR, -appConfig.getAbsenceDays());
+		Timestamp fromTimestamp = new Timestamp(fromCalendar.getTimeInMillis());	
 		
 
-		return userGroupRepository.countByTypeAndUserAndRetrievedAndDateatBetween("absence", user, false, aMonthAgoTimestamp , futureTimestamp); 
+		return userGroupRepository.countByTypeAndUserAndRetrievedAndDateatBetween("absence", user, false, fromTimestamp , toTimestamp); 
 		
 	}
 	
@@ -81,20 +81,27 @@ public class UserGroupService  {
     
     
     
-    public long decreasePendingRecieveCount(User user) {
+    public long decreasePendingRecieveCount(User user, AppConfig appConfig) {
     	
-		//Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
-		Calendar currentCalendar = Calendar.getInstance();
-		currentCalendar.add(Calendar.MONTH, +2);
-		Timestamp currentTimestamp = new Timestamp(currentCalendar.getTimeInMillis());	
-		
-		
-		Calendar aMonthAgoCalendar = Calendar.getInstance();
-		aMonthAgoCalendar.add(Calendar.MONTH, -1);
-		Timestamp aMonthAgoTimestamp = new Timestamp(aMonthAgoCalendar.getTimeInMillis());			
-    	
-		Optional<UserGroup> userGroup = userGroupRepository.findTop1ByTypeAndUserAndRetrievedAndDateatBetweenOrderByDateat("absence", user, false, aMonthAgoTimestamp, currentTimestamp);
 
+		
+		
+		Calendar fromCalendar = Calendar.getInstance();
+		fromCalendar.add(Calendar.DAY_OF_YEAR, -appConfig.getAbsenceDays());
+		fromCalendar.add(Calendar.MONTH, -1);
+		Timestamp fromTimestamp = new Timestamp(fromCalendar.getTimeInMillis());		
+		
+		
+		//Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
+		Calendar toCalendar = Calendar.getInstance();
+		toCalendar.add(Calendar.YEAR, +1);
+		Timestamp toTimestamp = new Timestamp(toCalendar.getTimeInMillis());	
+		
+    	
+		Optional<UserGroup> userGroup = userGroupRepository.findTop1ByTypeAndUserAndRetrievedAndDateatBetweenOrderByDateat("absence", user, false, fromTimestamp, toTimestamp);
+		
+	
+		
 		if (userGroup.isPresent()) {
 			
 			System.out.println(userGroup.get().getId());

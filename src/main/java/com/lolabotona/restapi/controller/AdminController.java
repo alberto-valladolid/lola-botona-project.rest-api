@@ -402,13 +402,23 @@ public class AdminController {
 	
 	@PreAuthorize("hasAnyRole('ADMIN')")
 	@PostMapping("/feast-days")
-	public ResponseEntity<?> addFeastDay(@Valid @RequestBody NewFeastDayRequest newFeastDayRequest) {
+	public ResponseEntity<?> addFeastDay(@Valid @RequestBody NewFeastDayRequest newFeastDayRequest) throws ParseException {	
 		
-		//System.out.println(signUpRequest.getDate());
+		DateFormat format = new SimpleDateFormat("dd/MM/yyyy");
 		
-		if ( !feastDayRepository.existsByDate(newFeastDayRequest.getDate())) { 
+		System.out.println(newFeastDayRequest.getDate());
+		
+		String dateRequestString = newFeastDayRequest.getDate(); 
+		
+		java.util.Date dateRequest =   format.parse(dateRequestString);
+		
+		java.sql.Date sqlDate = new java.sql.Date(dateRequest.getTime());
+
+		
+		
+		if ( !feastDayRepository.existsByDate(sqlDate)) { 
 			
-			FeastDay feastDay = new FeastDay(newFeastDayRequest.getDate()); 
+			FeastDay feastDay = new FeastDay(sqlDate); 
 					feastDayRepository.save(feastDay);
 			return ResponseEntity.ok(new MessageResponse("Festivo creado con éxito!"));			
 			
@@ -798,7 +808,7 @@ public class AdminController {
 										
 										if(userGroupService.getPendingRecieveCount(user.get(),appConfig.get()) > 0) {	
 											
-											long absenceId = userGroupService.decreasePendingRecieveCount(user.get());							
+											long absenceId = userGroupService.decreasePendingRecieveCount(user.get(), appConfig.get());							
 											
 											UserGroup newUserGroup = new UserGroup(user.get(), group.get(), "retrieve", true, timestampDate, absenceId); 
 											

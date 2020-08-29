@@ -13,6 +13,6 @@ public class NewFeastDayRequest {
 	
 	private Long id; 
 	
-	private Date date;
+	private String date;
 	
 }

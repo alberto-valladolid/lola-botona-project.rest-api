@@ -435,7 +435,9 @@ public class CalendarController {
             	     	    Optional<UserGroup> retrieveUserGroup = retrievesGroup.stream()  		      	  	  
             		      	  	    .filter(x -> (x.getUser().equals(user)  ))
             		      	  	    .findFirst();
-							
+            	     	    
+            	     	    
+            	     	
 							
 //		          	  		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user, group.get(), "recurrent");
 //		          			Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "absence", rewRetrieveRequest.getDate());
@@ -458,15 +460,18 @@ public class CalendarController {
 								}else {
 									
 									//Group group = new Group (newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getTimeofday(), newGroupRequest.getDayofweek(), newGroupRequest.isActived());
-									
+								
 									if(abcenseUserGroup.isPresent()) {
-										
+								
 										userGroupRepository.delete(abcenseUserGroup.get());
 										return ResponseEntity.ok(new MessageResponse("Falta eliminada con éxito"));
 										
 									}else {
-										long absenceId = userGroupService.decreasePendingRecieveCount(user);							
-											
+										
+										long absenceId = userGroupService.decreasePendingRecieveCount(user,appConfig.get());	
+										
+										//muere antes
+											   
 										UserGroup newUserGroup = new UserGroup(user, group.get(), "retrieve", true, rewRetrieveRequest.getDate(), absenceId); 
 										
 										userGroupRepository.save(newUserGroup);
@@ -567,7 +572,7 @@ public class CalendarController {
 				  		User user = userRepository.findById( userDetailsImpl.getId()).get();
 				  		
 				  		
-				  		
+				  		//se filtran los grupos que coincidan con el grupo, el usuario y el tipo
         	     	    Optional<UserGroup> recurrentUserGroup =  allUserGroups.stream()  		      	  	  
         	     	    		.filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("recurrent") && x.getUser().equals(user)))  
     	     	   				.findFirst();
@@ -588,44 +593,56 @@ public class CalendarController {
 	          			
         	     	   
 	          			
-	          			
+	          			//si el usuario asiste ese día
 						if (userGroupService.userAssists(group.get(), rewRetrieveRequest.getDate(), user, recurrentUserGroup, abcenseUserGroup, retrieveUserGroup)) {						
 		
 							
-		
+						    Optional<UserGroup> existRetrieve = allUserGroups.stream()  		      	  	  
+	        	     	    		.filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("retrieve") && x.getDateat().equals(rewRetrieveRequest.getDate()) && x.getUser().equals(user) && x.getDateat().equals(rewRetrieveRequest.getDate()) ))  
+	        		      	  	    .findFirst();
+							
 							
 							//Optional<UserGroup> existRetrieve = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "retrieve", rewRetrieveRequest.getDate());
 		
-							
-							if(retrieveUserGroup.isPresent()) {
+							//si ya existe una recuperación ese día
+							if(existRetrieve.isPresent()) {
 								
-						        try {
-						        
-						        	userGroupRepository.deleteById(retrieveUserGroup.get().getId());
-						        	
-						        	
-						            Optional<UserGroup> absenceGroup =  allUserGroups.stream()  		      	  	  
-			        	     	    		.filter(x -> (x.getId() == retrieveUserGroup.get().getAbsenceid()))  
-			    	     	   				.findFirst();
-			        	     	    
-						   
-						        	//Optional<UserGroup> absenceGroup = userGroupRepository.findById(retrieveUserGroup.get().getAbsenceid());
-						        	
-						    		if (absenceGroup.isPresent()) {
-						    			
-						    			//System.out.println(absenceGroup.get());
-						    			UserGroup currUserGroup  = absenceGroup.get(); 
-						    			currUserGroup.setRetrieved(false);
-						    			userGroupRepository.save(currUserGroup); 			
-						    		
-						    		} 		
-						        	
-						        } catch (Exception e) {
-						        	return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
-						        }
+								
+								return ResponseEntity
+										.badRequest()
+										.body(new MessageResponse("Error: Esta asistencia es una recuperación. No es posible anular recuperaciones. "  ));
+								
+								
+								
+//						        try {
+//						        	//la borro
+//						        	userGroupRepository.deleteById(existRetrieve.get().getId());
+//						        	
+//						        	
+//						            Optional<UserGroup> absenceGroup =  allUserGroups.stream()  		      	  	  
+//			        	     	    		.filter(x -> (x.getId() == existRetrieve.get().getAbsenceid()))  
+//			    	     	   				.findFirst();
+//			        	     	    
+//						   
+//						        	//Optional<UserGroup> absenceGroup = userGroupRepository.findById(retrieveUserGroup.get().getAbsenceid());
+//						            
+//						        	// pone en false el retrieved de la ausencia
+//						    		if (absenceGroup.isPresent()) {
+//						    			
+//						    			//System.out.println(absenceGroup.get());
+//						    			UserGroup currUserGroup  = absenceGroup.get(); 
+//						    			currUserGroup.setRetrieved(false);
+//						    			userGroupRepository.save(currUserGroup); 			
+//						    		
+//						    		} 		
+//						        	
+//						        } catch (Exception e) {
+//						        	return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
+//						        }
 						  		
 							}else {
 								
+								//crea la ausencia
 								UserGroup newUserGroup = new UserGroup(user, group.get(), "absence", false, rewRetrieveRequest.getDate(),null); 			
 								System.out.println(newUserGroup);
 								userGroupRepository.save(newUserGroup);							
