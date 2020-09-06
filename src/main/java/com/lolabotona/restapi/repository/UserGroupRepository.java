@@ -38,6 +38,7 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, Long> {
 		
 	int countByTypeAndUserAndRetrievedAndDateatBetween(String type,User user,boolean retrieve,Timestamp start,Timestamp end );	 
 	Optional<UserGroup> findTop1ByTypeAndUserAndRetrievedAndDateatBetweenOrderByDateat(String type,User user,boolean retrieve,Timestamp start,Timestamp end );
+	List<UserGroup> findByTypeAndUserAndRetrievedAndDateatBetween(String type,User user,boolean retrieve,Timestamp start,Timestamp end );	
 	
 	List<UserGroup> findByGroupInAndUserInAndTypeInAndDateatBetweenOrderByDateat( List<Group> groups,List<User> users, List<String> types,Timestamp start,Timestamp end );
 	List<UserGroup> findByGroupInAndUserInAndType( List<Group> groups,List<User> users, String type );

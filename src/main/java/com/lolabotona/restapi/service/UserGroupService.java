@@ -35,14 +35,19 @@ public class UserGroupService  {
 		
 		
 		//Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
-		Calendar toCalendar = Calendar.getInstance();
-		toCalendar.add(Calendar.YEAR, 1);
-		Timestamp toTimestamp = new Timestamp(toCalendar.getTimeInMillis());			
+		
 		
 		Calendar fromCalendar = Calendar.getInstance();
 		fromCalendar.add(Calendar.DAY_OF_YEAR, -appConfig.getAbsenceDays());
 		Timestamp fromTimestamp = new Timestamp(fromCalendar.getTimeInMillis());	
 		
+		
+		Calendar toCalendar = Calendar.getInstance();
+		toCalendar.add(Calendar.YEAR, 2);
+		//toCalendar.add(Calendar.MINUTE, (appConfig.getEventMinutesToAllow()- appConfig.getEventMinutes()));
+		Timestamp toTimestamp = new Timestamp(toCalendar.getTimeInMillis());			
+		
+
 
 		return userGroupRepository.countByTypeAndUserAndRetrievedAndDateatBetween("absence", user, false, fromTimestamp , toTimestamp); 
 		

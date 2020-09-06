@@ -49,6 +49,8 @@ import com.lolabotona.restapi.repository.UserRepository;
 import com.lolabotona.restapi.service.UserDetailsImpl;
 import com.lolabotona.restapi.service.UserGroupService;
 
+import ch.qos.logback.core.net.SyslogOutputStream;
+
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -384,31 +386,63 @@ public class CalendarController {
 				  
 				} 
 				
-				if(userGroupService.getPendingRecieveCount(user,appConfig.get()) > 0) {		
+				if(userGroupService.getPendingRecieveCount(user,appConfig.get()) > 0    ) {		
 					
 					Optional<Group> group = groupRepository.findById(rewRetrieveRequest.getGroupid());	
 					
 					if (group.isPresent()) {
 						
 						Date today = new Date();
-						String currMonthString; 
-		
-				
+						String dateMonthString;
+						
 						if(date.getMonthValue() < 10) {
-							currMonthString = "0"+date.getMonthValue(); 
+							dateMonthString = "0"+date.getMonthValue(); 
 						}else {
-							currMonthString = ""+date.getMonthValue(); 
+							dateMonthString = ""+date.getMonthValue(); 
 						}
 						
-						System.out.println("el mes es: " + date.getMonthValue());
+						//System.out.println("el mes es: " + date.getMonthValue());
+						
+						
 						
 				   	    String startEventString =  group.get().getStartTime().toString();
           	    	    startEventString = startEventString.substring(0, startEventString.length() - 3);          	    	  
-          	    	    Date parsedStartDate = dateFormat.parse(date.getYear() + "-" + currMonthString +  "-" +date.getDayOfMonth() + " "  + startEventString);          	    	    
-        	    	    Timestamp startTimestamp = new java.sql.Timestamp(parsedStartDate.getTime());           	    	    
+          	    	    Date parsedStartDate = dateFormat.parse(date.getYear() + "-" + dateMonthString +  "-" +date.getDayOfMonth() + " "  + startEventString);          	    	    
+//        	    	    Timestamp startTimestamp = new java.sql.Timestamp(parsedStartDate.getTime());  
+        	    	    
+        	    	    
+        	    	    
+        	    	    
+//        	    	    Timestamp testStartTimestamp  = new Timestamp(startTimestamp.getTime());
+//        	    	    Timestamp testStartTimestamp2  = new Timestamp(startTimestamp.getTime());
+//        	    	    
+//        	    		Calendar fromCalendarTimestamp  = Calendar.getInstance();
+//        	    		fromCalendarTimestamp.setTime(testStartTimestamp);
+//        	    		fromCalendarTimestamp.add(Calendar.DAY_OF_YEAR, - appConfig.get().getAbsenceDays()); 
+//          	    	    java.sql.Timestamp fromTimestamp = testStartTimestamp ;
+//        	    	    fromTimestamp.setTime(fromCalendarTimestamp.getTime().getTime());
+//        	    	    
+//        	    	    
+//
+//        	    		Calendar toCalendarTimestamp  = Calendar.getInstance();
+//        	    		toCalendarTimestamp.setTime(testStartTimestamp2);
+//        	    		toCalendarTimestamp.add(Calendar.YEAR,  1); 
+//          	    	    java.sql.Timestamp toTimestamp = testStartTimestamp2 ;
+//          	    	    toTimestamp.setTime(toCalendarTimestamp.getTime().getTime());
           	    	    
-						if(startTimestamp.after(today)) {
-							
+        	    		
+        	    		//fromSQLTimestamp.setTime(fromTimestamp.getTime().getTime());
+        	    		
+          	    	    
+						//a partir de ahora puede recuperar en fechas pasadas
+        	    	    //if(startTimestamp.after(today) ) {
+        	    	    
+
+    	   
+        	    		//comprobar si el usuario tiene  faltas pendientes de dos meses antes de la fecha del evento.
+        	    	    //if( userGroupRepository.countByTypeAndUserAndRetrievedAndDateatBetween("absence", user, false, fromTimestamp, toTimestamp) > 0 ) {	
+        	    	    	
+        
 							
 	        	    	    List<UserGroup> recurrentsGroup =  allUserGroups.stream()  		      	  	  
 	           		      	  	    .filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("recurrent") ))  
@@ -420,8 +454,7 @@ public class CalendarController {
             	    	   
             	     	    List<UserGroup> retrievesGroup =  allUserGroups.stream()  		      	  	  
                		      	  	    .filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("retrieve") && x.getDateat().equals(rewRetrieveRequest.getDate()) ))  
-                		      	  	.collect(Collectors.toList());
-            	     	    
+                		      	  	.collect(Collectors.toList());            	     	    
             	     	    
             	     	    
             	     	    Optional<UserGroup> recurrentUserGroup = recurrentsGroup.stream()  		      	  	  
@@ -435,18 +468,8 @@ public class CalendarController {
             	     	    Optional<UserGroup> retrieveUserGroup = retrievesGroup.stream()  		      	  	  
             		      	  	    .filter(x -> (x.getUser().equals(user)  ))
             		      	  	    .findFirst();
-            	     	    
-            	     	    
-            	     	
-							
-//		          	  		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user, group.get(), "recurrent");
-//		          			Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "absence", rewRetrieveRequest.getDate());
-//		          			Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "retrieve", rewRetrieveRequest.getDate());
-//							
-//		         			List<UserGroup> recurrentsGroup = userGroupRepository.findByGroupAndType( group.get(), "recurrent");
-//		          			List<UserGroup> abcensesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group.get(), "absence", rewRetrieveRequest.getDate());
-//		          			List<UserGroup> retrievesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group.get(), "retrieve", rewRetrieveRequest.getDate());
-							
+         	     	
+
 							if (userGroupService.userAssists(group.get(), rewRetrieveRequest.getDate(), user, recurrentUserGroup, abcenseUserGroup, retrieveUserGroup)) {
 								return ResponseEntity
 										.badRequest()
@@ -459,35 +482,52 @@ public class CalendarController {
 											.body(new MessageResponse("Error: El grupo está completo "));
 								}else {
 									
-									//Group group = new Group (newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getTimeofday(), newGroupRequest.getDayofweek(), newGroupRequest.isActived());
-								
-									if(abcenseUserGroup.isPresent()) {
-								
-										userGroupRepository.delete(abcenseUserGroup.get());
-										return ResponseEntity.ok(new MessageResponse("Falta eliminada con éxito"));
+									
+									Date  max = parsedStartDate;
+							
+									
+									Calendar cal = Calendar.getInstance();
+									cal.setTime(max);
+									cal.add(Calendar.MINUTE, - appConfig.get().getEventMinutesToAllow());
+									Date min = cal.getTime();
+									
+									if (today.after(min) && today.before(max) ) {
+										
+										long absenceId = userGroupService.decreasePendingRecieveCount(user,appConfig.get());	
+										UserGroup newUserGroup = new UserGroup(user, group.get(), "retrieve", true, rewRetrieveRequest.getDate(), absenceId);
+										userGroupRepository.save(newUserGroup);
+										return ResponseEntity.ok(new MessageResponse("Recuperación creada con éxito!"));
 										
 									}else {
 										
-										long absenceId = userGroupService.decreasePendingRecieveCount(user,appConfig.get());	
 										
-										//muere antes
-											   
-										UserGroup newUserGroup = new UserGroup(user, group.get(), "retrieve", true, rewRetrieveRequest.getDate(), absenceId); 
+										return ResponseEntity
+												.badRequest()
+												.body(new MessageResponse("Error: Solo es posible recuperar clases si falta menos de "+ ((appConfig.get().getEventMinutesToAllow())/60)/24 +" dias para su inicio "));
 										
-										userGroupRepository.save(newUserGroup);
 										
-										return ResponseEntity.ok(new MessageResponse("Recuperación creada con éxito!"));
-									}	
+									
+									}
+									
+
+	
 									
 								}
 								
 							}
 							
-						}else {
-							  return ResponseEntity
-										.badRequest()
-										.body(new MessageResponse("Error: No se pueden crear asistencias en fechas pasadas"));
-						}
+						
+//						}else {
+//							 return ResponseEntity
+//									.badRequest()
+//									.body(new MessageResponse("Error: Han pasado más de " + appConfig.get().getAbsenceDays() + " días desde su última ausencia, el plazo para recuperar la clase ha terminado."));
+//						}
+							
+//						}else {
+//							  return ResponseEntity
+//										.badRequest()
+//										.body(new MessageResponse("Error: No se pueden crear asistencias en fechas pasadas"));
+//						}
 						
 					} else {
 						return ResponseEntity
@@ -528,145 +568,151 @@ public class CalendarController {
 		if(!userGroupService.containsDate(feastDays,dayDate)) {
 				        
 			Date today = new Date();
-					
-				Optional<Group> group = groupRepository.findById(rewRetrieveRequest.getGroupid());				
 				
-				if (group.isPresent()) {	
+			Optional<Group> group = groupRepository.findById(rewRetrieveRequest.getGroupid());				
+			
+			if (group.isPresent()) {	
+				
+				Optional<AppConfig> appConfig = appConfigRepository.findById( (long) 1);
+			 	 	
+			 	if (!appConfig.isPresent()) {
+			 	 
+			 		 return ResponseEntity
+			 				.badRequest()
+			 				.body(new MessageResponse("Error: La aplicación necesita autogenerar la configuración. El administrador debe acceder a la configuración de la aplicación."));
+			 	 
+			 	} 
+								
+				String currMonthString; 
+				
+				if(date.getMonthValue() < 10) {
+					currMonthString = "0"+date.getMonthValue(); 
+				}else {
+					currMonthString = ""+date.getMonthValue(); 
+				}
+				
+		   	    String startEventString =  group.get().getStartTime().toString();
+  	    	    startEventString = startEventString.substring(0, startEventString.length() - 3);          	    	  
+  	    	    Date parsedStartDate = dateFormat.parse(date.getYear() + "-" + currMonthString +  "-" +date.getDayOfMonth() + " "  + startEventString);          	    	    
+	    	    Timestamp startTimestamp = new java.sql.Timestamp(parsedStartDate.getTime());     
+	    	    Timestamp startTimestamp2 = new java.sql.Timestamp(parsedStartDate.getTime());  
+	    	    
+	    	    System.out.println("HOy: "+startTimestamp);
+	    	    
+	 
+	    	    
+	    	    //SE RESTAN LOS MINUTOS DE LA CONFIGURACIÓN AL TIMESTAMP DEL EVENTO
+	    	    
+	    	    
+	    	       
+	    	    //limite para abrir (permitir) las ausencias.Hora de inicio menos los minutos de appConfig.getEventMinutesToAllow
+	    	    java.sql.Timestamp openAbsenceLimit = startTimestamp ;
+	    		Calendar calOpenAbsenceLimit  = Calendar.getInstance();
+	    		calOpenAbsenceLimit.setTime(startTimestamp);
+	    		calOpenAbsenceLimit.add(Calendar.MINUTE, - appConfig.get().getEventMinutesToAllow());
+	    		openAbsenceLimit.setTime(calOpenAbsenceLimit.getTime().getTime());
+	    		
+	    		
+	    		
+	    	    //limite para cerrar las ausencias. Hora de inicio menos los minutos de appConfig.getEventMinutes
+	    	    java.sql.Timestamp closeAbseceLimit = startTimestamp2 ;
+	    		Calendar calCloseAbseceLimit  = Calendar.getInstance();
+	    		calCloseAbseceLimit.setTime(startTimestamp2);
+	    		calCloseAbseceLimit.add(Calendar.MINUTE, - appConfig.get().getEventMinutes());
+	    		closeAbseceLimit.setTime(calCloseAbseceLimit.getTime().getTime());
+	    		
+	    		
+	    		System.out.println("HOy: "+startTimestamp);
+	    		
+	    		System.out.println("open: limit "+ calOpenAbsenceLimit.getTime());
+	    		System.out.println("close limit: "+ calCloseAbseceLimit.getTime());
+	    	    
+				if(  today.after(openAbsenceLimit)  && today.before(closeAbseceLimit)  ) {
+				
+				
+					UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
+			  		User user = userRepository.findById( userDetailsImpl.getId()).get();
+			  		
+			  		
+			  		//se filtran los grupos que coincidan con el grupo, el usuario y el tipo
+    	     	    Optional<UserGroup> recurrentUserGroup =  allUserGroups.stream()  		      	  	  
+    	     	    		.filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("recurrent") && x.getUser().equals(user)))  
+	     	   				.findFirst();
+    	     	    
+    	     	    Optional<UserGroup> abcenseUserGroup = allUserGroups.stream()  		      	  	  
+    	     	    		 .filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("absence") && x.getDateat().equals(rewRetrieveRequest.getDate()) && x.getUser().equals(user) ))  
+     		      	  	    .findFirst();
+    	     	   
+    	     	    Optional<UserGroup> retrieveUserGroup = allUserGroups.stream()  		      	  	  
+    	     	    		.filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("retrieve") && x.getDateat().equals(rewRetrieveRequest.getDate()) && x.getUser().equals(user) ))  
+    		      	  	    .findFirst();
 					
-					Optional<AppConfig> appConfig = appConfigRepository.findById( (long) 1);
-				 	 	
-				 	if (!appConfig.isPresent()) {
-				 	 
-				 		 return ResponseEntity
-				 				.badRequest()
-				 				.body(new MessageResponse("Error: La aplicación necesita autogenerar la configuración. El administrador debe acceder a la configuración de la aplicación."));
-				 	 
-				 	} 
-									
-					String currMonthString; 
-					
-					if(date.getMonthValue() < 10) {
-						currMonthString = "0"+date.getMonthValue(); 
-					}else {
-						currMonthString = ""+date.getMonthValue(); 
-					}
-					
-			   	    String startEventString =  group.get().getStartTime().toString();
-      	    	    startEventString = startEventString.substring(0, startEventString.length() - 3);          	    	  
-      	    	    Date parsedStartDate = dateFormat.parse(date.getYear() + "-" + currMonthString +  "-" +date.getDayOfMonth() + " "  + startEventString);          	    	    
-    	    	    Timestamp startTimestamp = new java.sql.Timestamp(parsedStartDate.getTime());         	    	    
-    	 
-    	    	    
-    	    	    //SE RESTAN LOS MINUTOS DE LA CONFIGURACIÓN AL TIMESTAMP DEL EVENTO
-    	    	    java.sql.Timestamp startTimestampMinusMins = startTimestamp ;
-    	    		Calendar cal  = Calendar.getInstance();
-    	    		cal.setTime(startTimestamp);
-    	    		cal.add(Calendar.MINUTE, - appConfig.get().getEventMinutes());
-    	    		startTimestampMinusMins.setTime(cal.getTime().getTime());
-    	    		
-    	    	    
-					if(today.before(startTimestampMinusMins)) {
-					
-					
-						UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
-				  		User user = userRepository.findById( userDetailsImpl.getId()).get();
-				  		
-				  		
-				  		//se filtran los grupos que coincidan con el grupo, el usuario y el tipo
-        	     	    Optional<UserGroup> recurrentUserGroup =  allUserGroups.stream()  		      	  	  
-        	     	    		.filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("recurrent") && x.getUser().equals(user)))  
-    	     	   				.findFirst();
-        	     	    
-        	     	    Optional<UserGroup> abcenseUserGroup = allUserGroups.stream()  		      	  	  
-        	     	    		 .filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("absence") && x.getDateat().equals(rewRetrieveRequest.getDate()) && x.getUser().equals(user) ))  
-         		      	  	    .findFirst();
-        	     	   
-        	     	    Optional<UserGroup> retrieveUserGroup = allUserGroups.stream()  		      	  	  
-        	     	    		.filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("retrieve") && x.getDateat().equals(rewRetrieveRequest.getDate()) && x.getUser().equals(user) ))  
-        		      	  	    .findFirst();
+    	     	                    			
+          			//si el usuario asiste ese día
+					if (userGroupService.userAssists(group.get(), rewRetrieveRequest.getDate(), user, recurrentUserGroup, abcenseUserGroup, retrieveUserGroup)) {						
+	
 						
-        	     	    
-//	          	  		Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user, group.get(), "recurrent");
-//	          			Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "absence", rewRetrieveRequest.getDate());
-//	          			Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "retrieve", rewRetrieveRequest.getDate());
+					    Optional<UserGroup> existRetrieve = allUserGroups.stream()  		      	  	  
+        	     	    		.filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("retrieve") && x.getDateat().equals(rewRetrieveRequest.getDate()) && x.getUser().equals(user) && x.getDateat().equals(rewRetrieveRequest.getDate()) ))  
+        		      	  	    .findFirst();						
 						
-	          			
-        	     	   
-	          			
-	          			//si el usuario asiste ese día
-						if (userGroupService.userAssists(group.get(), rewRetrieveRequest.getDate(), user, recurrentUserGroup, abcenseUserGroup, retrieveUserGroup)) {						
-		
-							
-						    Optional<UserGroup> existRetrieve = allUserGroups.stream()  		      	  	  
-	        	     	    		.filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("retrieve") && x.getDateat().equals(rewRetrieveRequest.getDate()) && x.getUser().equals(user) && x.getDateat().equals(rewRetrieveRequest.getDate()) ))  
-	        		      	  	    .findFirst();
+	
+						//si ya existe una recuperación ese día
+						if(existRetrieve.isPresent()) {
 							
 							
-							//Optional<UserGroup> existRetrieve = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group.get(), "retrieve", rewRetrieveRequest.getDate());
-		
-							//si ya existe una recuperación ese día
-							if(existRetrieve.isPresent()) {
-								
-								
-								return ResponseEntity
-										.badRequest()
-										.body(new MessageResponse("Error: Esta asistencia es una recuperación. No es posible anular recuperaciones. "  ));
-								
-								
-								
-//						        try {
-//						        	//la borro
-//						        	userGroupRepository.deleteById(existRetrieve.get().getId());
-//						        	
-//						        	
-//						            Optional<UserGroup> absenceGroup =  allUserGroups.stream()  		      	  	  
-//			        	     	    		.filter(x -> (x.getId() == existRetrieve.get().getAbsenceid()))  
-//			    	     	   				.findFirst();
-//			        	     	    
-//						   
-//						        	//Optional<UserGroup> absenceGroup = userGroupRepository.findById(retrieveUserGroup.get().getAbsenceid());
-//						            
-//						        	// pone en false el retrieved de la ausencia
-//						    		if (absenceGroup.isPresent()) {
-//						    			
-//						    			//System.out.println(absenceGroup.get());
-//						    			UserGroup currUserGroup  = absenceGroup.get(); 
-//						    			currUserGroup.setRetrieved(false);
-//						    			userGroupRepository.save(currUserGroup); 			
-//						    		
-//						    		} 		
-//						        	
-//						        } catch (Exception e) {
-//						        	return new ResponseEntity<>(HttpStatus.EXPECTATION_FAILED);
-//						        }
-						  		
-							}else {
-								
-								//crea la ausencia
-								UserGroup newUserGroup = new UserGroup(user, group.get(), "absence", false, rewRetrieveRequest.getDate(),null); 			
-								System.out.println(newUserGroup);
-								userGroupRepository.save(newUserGroup);							
-							}						
-							
-							return ResponseEntity.ok(new MessageResponse("Ausencia creada con éxito!"));
-							
-						}else {
 							return ResponseEntity
 									.badRequest()
-									.body(new MessageResponse("Error: No se puede crear la ausencia, el usuario no asiste a clase ese día "  ));
-						}
+									.body(new MessageResponse("Error: Esta asistencia es una recuperación. No es posible anular recuperaciones. "  ));
+							
+							
+					  		
+						}else {
+							
+							//crea la ausencia
+							UserGroup newUserGroup = new UserGroup(user, group.get(), "absence", false, rewRetrieveRequest.getDate(),null); 			
+							System.out.println(newUserGroup);
+							userGroupRepository.save(newUserGroup);							
+						}						
+						
+						return ResponseEntity.ok(new MessageResponse("Ausencia creada con éxito!"));
 						
 					}else {
-						  return ResponseEntity
-									.badRequest()
-									.body(new MessageResponse("Error: No se pueden crear asistencias en fechas pasadas"));
+						return ResponseEntity
+								.badRequest()
+								.body(new MessageResponse("Error: No se puede crear la ausencia, el usuario no asiste a clase ese día "  ));
 					}
 					
-				} else {
-					return ResponseEntity
-							.badRequest()
-							.body(new MessageResponse("Error: Grupo no encontrado"));
+				}else {
+					
+					if( !today.after(openAbsenceLimit)) {
+						 return ResponseEntity
+									.badRequest()
+									.body(new MessageResponse("Error: Solo se puede anular clases cuando falten menos de "+  (appConfig.get().getEventMinutesToAllow()/60)/24 +" día/s para su comienzo"));
+					}else  {
+						
+						 return ResponseEntity
+									.badRequest()
+									.body(new MessageResponse("Error: La clase ya ha comenzado o faltan menos de "+  appConfig.get().getEventMinutes()/60 +" día/s para su comienzo"));
+						
+//						 return ResponseEntity
+//									.badRequest()
+//									.body(new MessageResponse("Error: No se pueden crear ausencia en fechas pasadas"));
+					}
+						
+						
+						
+					
+					
+					
+				 
 				}
+				
+			} else {
+				return ResponseEntity
+						.badRequest()
+						.body(new MessageResponse("Error: Grupo no encontrado"));
+			}
 				
 
 

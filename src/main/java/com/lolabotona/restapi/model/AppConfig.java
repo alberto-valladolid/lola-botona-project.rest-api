@@ -23,7 +23,9 @@ public class AppConfig {
 	@Id
 	private Long id; 
 	
-	private int eventMinutes; 
+	private int eventMinutes; // minutos restantes para bloquear la anulación de clases
+	
+	private int eventMinutesToAllow; // minutos restantes para permitir la anulación de clases
 	
 	private int absenceDays;  //días para recuperar una asuencia
 
@@ -40,7 +42,7 @@ public class AppConfig {
 
 	@Override
 	public String toString() {
-		return "AppConfig [id=" + id + ", eventMinutes=" + eventMinutes +  ", absenceDays=" + absenceDays + "]";
+		return "AppConfig [id=" + id + ", eventMinutes=" + eventMinutes +  ", absenceDays=" + absenceDays + ", eventMinutesToAllow=" + eventMinutesToAllow + "]";
 	}
 	
     @Override

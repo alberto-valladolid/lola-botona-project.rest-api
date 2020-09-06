@@ -16,4 +16,8 @@ public class ChgAppConfig {
     
     @NotNull
     private int eventMinutes;
+    
+    @NotNull
+    private int eventMinutesToAllow;
+    
 }

@@ -469,7 +469,8 @@ public class AdminController {
 		    AppConfig appConfigUpdate = appConfig.get();
 		    
 		    appConfigUpdate.setAbsenceDays(chgAppConfig.getAbsenceDays());
-		    appConfigUpdate.setEventMinutes(chgAppConfig.getEventMinutes());			  
+		    appConfigUpdate.setEventMinutes(chgAppConfig.getEventMinutes());	
+		    appConfigUpdate.setEventMinutesToAllow(chgAppConfig.getEventMinutesToAllow());
 	
             return new ResponseEntity<>(appConfigRepository.save(appConfigUpdate), HttpStatus.OK);         
             
