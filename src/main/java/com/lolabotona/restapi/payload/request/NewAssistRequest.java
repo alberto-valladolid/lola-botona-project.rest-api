@@ -19,5 +19,7 @@ public class NewAssistRequest {
 	
 	private String type;
 	
+	private String addDeleteRetrieve;
+	
 	
 }
