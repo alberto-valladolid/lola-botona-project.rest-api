@@ -351,7 +351,6 @@ public class AdminController {
 		if ( groups.isEmpty()) { 
 			
 			Optional<User> teacher = userRepository.findByIdAndType(newGroupRequest.getTeacherId(), "teacher");
-			System.out.println(newGroupRequest.getTeacherId());
 			if (teacher.isPresent()) {
 				
 				String stringTime; 				
@@ -375,7 +374,7 @@ public class AdminController {
 				long ms = dateSDF.parse(stringTime).getTime();
 				Time startTime = new Time(ms);		
 					
-				Group group = new Group(newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getShoworder(),  newGroupRequest.getDayofweek(), newGroupRequest.isActive(), startTime, teacher.get().getId() );
+				Group group = new Group(newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getShoworder(),  newGroupRequest.getDayofweek(), newGroupRequest.isActive(), startTime, teacher.get());
 				groupRepository.save(group);
 				return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));					
 				
@@ -389,6 +388,29 @@ public class AdminController {
 		
 		
 	}
+	
+	
+	@PreAuthorize("hasAnyRole('ADMIN')")
+	@GetMapping("/actualizargrupos")
+	public ResponseEntity<?> actualizargrupos(  NewGroupRequest newGroupRequest) throws ParseException {
+		
+		  List<Group> groups = new ArrayList<Group>();	 
+	      groupRepository.findAll().forEach(groups::add);					
+		
+		
+		Optional<User> teacher = userRepository.findByIdAndType(1, "teacher");
+		
+		for (Group group : groups) { 
+			
+			group.setTeacher(teacher.get());
+			groupRepository.save(group);
+		}
+		
+		return new ResponseEntity<>(groups, HttpStatus.OK);
+		
+		
+	}
+	
 	
 	
 	@PreAuthorize("hasAnyRole('ADMIN')")
@@ -418,35 +440,45 @@ public class AdminController {
 			if ( ( storedGroupData.get().getdayofweek() == newGroup.getDayofweek()  &&    newGroup.getShoworder() == storedGroupData.get().getshoworder() )  ||  groups.isEmpty())  {
 				
 				
-				String stringTime; 
+				Optional<User> teacher = userRepository.findByIdAndType(newGroup.getTeacherId(), "teacher");	
 				
-				if(newGroup.getStartTimeHours() < 10) {
-					stringTime = "0"+  newGroup.getStartTimeHours(); 
-				}else {
-					stringTime =  ""+ newGroup.getStartTimeHours(); 
+				if(teacher.isPresent()) {
+				
+					String stringTime; 
+					
+					if(newGroup.getStartTimeHours() < 10) {
+						stringTime = "0"+  newGroup.getStartTimeHours(); 
+					}else {
+						stringTime =  ""+ newGroup.getStartTimeHours(); 
+					}
+					
+				    stringTime += ":"; 
+				    		
+					if(newGroup.getStartTimeMins() < 10) {
+						stringTime += "0"+  newGroup.getStartTimeMins(); 
+					}else {
+						stringTime += ""+  newGroup.getStartTimeMins(); 
+					}
+					
+					SimpleDateFormat dateSDF = new SimpleDateFormat("HH:mm");
+				
+					long ms = dateSDF.parse(stringTime).getTime();
+					Time startTime = new Time(ms);			
+					Group group = storedGroupData.get(); 
+					group.setStartTime(startTime);
+			    	group.setCapacity(newGroup.getCapacity());
+			    	group.setDescription(newGroup.getDescription());  
+			    	group.setshoworder(newGroup.getShoworder());
+			    	group.setdayofweek(newGroup.getDayofweek());
+			    	group.setActive(newGroup.isActive());  
+			    	group.setTeacher(teacher.get());
+		            return new ResponseEntity<>(groupRepository.save(group), HttpStatus.OK); 
+		            
+				}else {	
+					
+					return ResponseEntity.badRequest().body(new MessageResponse("Error: Profesor no encontrado"));
+					
 				}
-				
-			    stringTime += ":"; 
-			    		
-				if(newGroup.getStartTimeMins() < 10) {
-					stringTime += "0"+  newGroup.getStartTimeMins(); 
-				}else {
-					stringTime += ""+  newGroup.getStartTimeMins(); 
-				}
-				
-				SimpleDateFormat dateSDF = new SimpleDateFormat("HH:mm");
-			
-				long ms = dateSDF.parse(stringTime).getTime();
-				Time startTime = new Time(ms);			
-				Group group = storedGroupData.get(); 
-				group.setStartTime(startTime);
-		    	group.setCapacity(newGroup.getCapacity());
-		    	group.setDescription(newGroup.getDescription());  
-		    	group.setshoworder(newGroup.getShoworder());
-		    	group.setdayofweek(newGroup.getDayofweek());
-		    	group.setActive(newGroup.isActive());  
-		    	group.setTeacherid(newGroup.getTeacherId());
-	            return new ResponseEntity<>(groupRepository.save(group), HttpStatus.OK); 
 	              
 			}else {	
 				

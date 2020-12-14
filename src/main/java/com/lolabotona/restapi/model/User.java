@@ -42,6 +42,16 @@ public class User {
     @OneToMany(mappedBy = "user",cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserTeacher> userTeacherSet; //profesores asignados a este usuario
 	
+	
+	@JsonManagedReference(value="user3")
+    @OneToMany(mappedBy = "teacher",cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserTeacher> userSet; //usuarios que tiene como profesor este usuario
+	
+	@JsonManagedReference(value="user4")
+    @OneToMany(mappedBy = "teacher",cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Group> studentsGroupSet; //grupos que tiene asignados este usuario siendo profesor 
+	
+	
 //	FUNCIONA
 //    @OneToMany(mappedBy = "teacher",cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
 //    private Set<Group> groupsWitchIsTeacher; 

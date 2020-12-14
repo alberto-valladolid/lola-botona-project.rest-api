@@ -11,15 +11,19 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 
 
@@ -47,9 +51,17 @@ public class Group {
 //	  @ManyToOne
 //	  @JoinColumn(name = "teacherid")
 //	  private User teacher;
+	
+	
+	@JsonBackReference(value="user4")
+    @ManyToOne
+    @JoinColumn(name = "teacherid", nullable = true, columnDefinition="default 1")
+    private User teacher;
 		
-	private Long teacherid;  	
+
+	//private Long teacherid;  	
     private int capacity;
+    
 	
     @NotBlank    
     private String description; 
@@ -66,14 +78,14 @@ public class Group {
 	public Group() {
 	}
 
-	public Group(int capacity, String description, int showorder, int dayofweek,boolean active, Time startTime, Long teacherid) {
+	public Group(int capacity, String description, int showorder, int dayofweek,boolean active, Time startTime, User teacher) {
 		this.capacity = capacity;
 		this.description = description;
 		this.showorder = showorder;
 		this.dayofweek = dayofweek;
 		this.active = active; 	
 		this.startTime = startTime; 	
-		this.teacherid = teacherid;
+		this.teacher = teacher;
 	}
 	
 
@@ -126,12 +138,17 @@ public class Group {
 		this.dayofweek = dayofweek;
 	}
 	
-	public void setTeacherid(Long teacherid) {
-		this.teacherid = teacherid;
+	
+	public void setTeacher(User teacher) {
+		this.teacher = teacher;
 	}
 	
 	public Long getTeacherid() {
-		return teacherid;
+		if(this.teacher.getId() !=null) {
+			return this.teacher.getId(); 
+		}else {
+			return (long) 1;
+		}
 	}
 	
 	public boolean getActive() {

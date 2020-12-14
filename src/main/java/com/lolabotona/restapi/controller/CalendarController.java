@@ -95,18 +95,20 @@ public class CalendarController {
 	      
 	      List<UserTeacher> userTeacherList  = userTeacherRepository.findByUser(user);
 			
-		  List<Long> teachersIdList = new ArrayList<Long>();
+	 	  List<User> teacherList = new ArrayList<User>();
  
 		  if(!userTeacherList.isEmpty()){		
 			
 			  for (UserTeacher teacher : userTeacherList) {
-      		  
-				  teachersIdList.add(teacher.getTeacher().getId());
+				  
+				  teacherList.add(teacher.getTeacher());
 			  }
 			
 		  }
 	       
-		  List<Group> allGroups = groupRepository.findByActiveAndTeacheridInOrderByShoworderAsc(true,teachersIdList);		  
+	
+		  List<Group> allGroups = groupRepository.findByActiveAndTeacherInOrderByShoworderAsc(true,teacherList);		  
+
      	  List<UserGroup> allUserGroups =  userGroupRepository.findByGroupIn(allGroups);       
 		  
 		  int postMonthExtraDays, preMonthExtraDays;		  

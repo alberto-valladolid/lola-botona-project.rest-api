@@ -34,23 +34,23 @@ public class UserTeacher implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id; 
 	
-	@JsonBackReference(value="user")
+	@JsonBackReference(value="user2")
     @ManyToOne
     @JoinColumn(name = "userid", referencedColumnName = "id")
     private User user;
 
-	@JsonBackReference(value="user2")
+	@JsonBackReference(value="user3")
     @ManyToOne
     @JoinColumn(name = "teacherid", referencedColumnName = "id")
     private User teacher;
-    
+	   
     public UserTeacher(User user, User teacher) {
     	
         this.user = user;
         this.teacher = teacher;
         
     }  	    
-	   
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
