@@ -3,12 +3,7 @@ package com.lolabotona.restapi.payload.response;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 
 import lombok.Getter;
 import lombok.Setter;

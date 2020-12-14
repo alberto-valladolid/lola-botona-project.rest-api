@@ -14,19 +14,12 @@ import com.lolabotona.restapi.model.FeastDay;
 import com.lolabotona.restapi.model.Group;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.model.UserGroup;
-import com.lolabotona.restapi.repository.AppConfigRepository;
 import com.lolabotona.restapi.repository.UserGroupRepository;
 
 
 @Service
 public class UserGroupService  {
 	
-
-	
-	@Autowired 
-	private   AppConfigRepository appConfigRepository; 
-	
-
 	
 	@Autowired 
 	private   UserGroupRepository userGroupRepository; 
@@ -53,6 +46,21 @@ public class UserGroupService  {
 		
 	}
 	
+	
+	public   List<UserGroup> getPendingRecieve(User user, AppConfig appConfig) {	
+	
+		Calendar fromCalendar = Calendar.getInstance();
+		fromCalendar.add(Calendar.DAY_OF_YEAR, -appConfig.getAbsenceDays());
+		Timestamp fromTimestamp = new Timestamp(fromCalendar.getTimeInMillis());	
+				
+		Calendar toCalendar = Calendar.getInstance();
+		toCalendar.add(Calendar.YEAR, 2);
+		//toCalendar.add(Calendar.MINUTE, (appConfig.getEventMinutesToAllow()- appConfig.getEventMinutes()));
+		Timestamp toTimestamp = new Timestamp(toCalendar.getTimeInMillis());			
+		
+		return userGroupRepository.findByTypeAndUserAndRetrievedAndDateatBetween("absence", user, false, fromTimestamp , toTimestamp); 
+		
+	}	
 	
     public boolean userAssists(  Group group,  Timestamp dateAt , User user,Optional<UserGroup> recurrentUserGroup, Optional<UserGroup> abcenseUserGroup, Optional<UserGroup> retrieveUserGroup) { 
 

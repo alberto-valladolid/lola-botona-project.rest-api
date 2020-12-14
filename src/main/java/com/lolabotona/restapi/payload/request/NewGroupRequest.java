@@ -22,6 +22,8 @@ public class NewGroupRequest {
 	    @NotNull  
 	    private int dayofweek;
 
+	    @NotNull  
+	    private Long teacherId;
 	    
 	    private boolean active;
 	    

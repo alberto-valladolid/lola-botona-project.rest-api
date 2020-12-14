@@ -36,6 +36,7 @@ import com.lolabotona.restapi.model.AppConfig;
 import com.lolabotona.restapi.model.FeastDay;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.model.UserGroup;
+import com.lolabotona.restapi.model.UserTeacher;
 import com.lolabotona.restapi.payload.request.NewCalendarRequest;
 import com.lolabotona.restapi.payload.response.CalendarDayResponse;
 import com.lolabotona.restapi.payload.response.CalendarEventResponse;
@@ -46,10 +47,10 @@ import com.lolabotona.restapi.repository.FeastDayRepository;
 import com.lolabotona.restapi.repository.GroupRepository;
 import com.lolabotona.restapi.repository.UserGroupRepository;
 import com.lolabotona.restapi.repository.UserRepository;
+import com.lolabotona.restapi.repository.UserTeacherRepository;
 import com.lolabotona.restapi.service.UserDetailsImpl;
 import com.lolabotona.restapi.service.UserGroupService;
 
-import ch.qos.logback.core.net.SyslogOutputStream;
 
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -69,6 +70,9 @@ public class CalendarController {
     @Autowired 
 	private UserRepository userRepository; 
     
+	@Autowired 
+	private UserTeacherRepository userTeacherRepository; 
+    
     @Autowired 
 	private GroupRepository groupRepository; 
     	
@@ -82,7 +86,6 @@ public class CalendarController {
 	  try {
 		  System.out.println(" ");
 		  System.out.println("START");
-		  System.out.println(" ");
 		  
 		  UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();		
   		  User user = userRepository.findById( userDetailsImpl.getId()).get();
@@ -90,13 +93,21 @@ public class CalendarController {
 	      List<FeastDay> feastDays = new ArrayList<FeastDay>();    
 	      feastDayRepository.findAll().forEach(feastDays::add);
 	      
-	      
-	      List<UserGroup> allUserGroups =  new ArrayList<UserGroup>(); 	
-	      userGroupRepository.findAll().forEach(allUserGroups::add);
-	      
-	      List<Group> allGroups = groupRepository.findByActiveOrderByShoworderAsc(true);
-	      
-	      System.out.println(allUserGroups);
+	      List<UserTeacher> userTeacherList  = userTeacherRepository.findByUser(user);
+			
+		  List<Long> teachersIdList = new ArrayList<Long>();
+ 
+		  if(!userTeacherList.isEmpty()){		
+			
+			  for (UserTeacher teacher : userTeacherList) {
+      		  
+				  teachersIdList.add(teacher.getTeacher().getId());
+			  }
+			
+		  }
+	       
+		  List<Group> allGroups = groupRepository.findByActiveAndTeacheridInOrderByShoworderAsc(true,teachersIdList);		  
+     	  List<UserGroup> allUserGroups =  userGroupRepository.findByGroupIn(allGroups);       
 		  
 		  int postMonthExtraDays, preMonthExtraDays;		  
 	      List<CalendarDayResponse> calendarDays = new ArrayList<CalendarDayResponse>();      
@@ -117,16 +128,14 @@ public class CalendarController {
      		  if( c.get(Calendar.MONTH) == 0) {
     		   
         			  startString = c.get(Calendar.YEAR)-1 + "-12-"+ (YearMonth.of(c.get(Calendar.YEAR)-1, 11).lengthOfMonth()+1-preMonthExtraDays);
-                	  endString =   c.get(Calendar.YEAR)-1 + "-12-"+  YearMonth.of(c.get(Calendar.YEAR)-1, 11).lengthOfMonth();
-                	  
+                	  endString =   c.get(Calendar.YEAR)-1 + "-12-"+  YearMonth.of(c.get(Calendar.YEAR)-1, 11).lengthOfMonth();                	  
         		   
     		  }else {
-    			   previusMonthString =   String.valueOf(c.get(Calendar.MONTH));
-        		   
+    			  
+    			  previusMonthString =   String.valueOf(c.get(Calendar.MONTH));        		   
          		  if (c.get(Calendar.MONTH) <10 && c.get(Calendar.MONTH) != 0 ) {
         			  previusMonthString = "0"+previusMonthString; 
-        		  }
-        		   
+        		  }        		   
     			  startString = String.valueOf(c.get(Calendar.YEAR)) + "-" + previusMonthString +"-"+ (YearMonth.of(c.get(Calendar.YEAR), c.get(Calendar.MONTH)).lengthOfMonth()+1-preMonthExtraDays);
             	  endString =   String.valueOf(c.get(Calendar.YEAR)) + "-" + previusMonthString +"-"+  YearMonth.of(c.get(Calendar.YEAR), c.get(Calendar.MONTH)).lengthOfMonth();
             	  
@@ -174,7 +183,7 @@ public class CalendarController {
       	  
       	  start = LocalDate.parse(startString);
       	  end = LocalDate.parse(endString); 
-      	  
+  
       	  while (!start.isAfter(end)) {      		
     
 	  	        try {
@@ -194,21 +203,13 @@ public class CalendarController {
 	  	        	int dayOfWeek =  (start.getDayOfWeek().getValue() % 7) +1 ; 
 	  	        	
 	  	        	//find current day's events
-	      	  		//List<Group> groups = groupRepository.findByDayofweekAndActiveOrderByShoworderAsc( dayOfWeek, true);
 
 	      	  	    ArrayList<CalendarEventResponse> events = new ArrayList<CalendarEventResponse>();
 	      	  	    
 	      	  	    
 		      	  	List<Group> todayGroups =  allGroups.stream()
-		      	  	    .filter(g -> g.getdayofweek() == dayOfWeek).collect(Collectors.toList());
-	      	  	    
-//      	  	    System.out.println(" ");
-//  	  	        System.out.println("Eventos del dia");  	  	        	
-//	  	        	System.out.println(todayGroups);
-//	  	        	System.out.println(" ");
-      	  	    
-	
-      				//for (Group group : groups) {
+		      	  	    .filter(g -> g.getdayofweek() == dayOfWeek).collect(Collectors.toList());  
+      	
       				for (Group group : todayGroups) { 
       		
       					CalendarEventResponse calendarEvent = new CalendarEventResponse();      					
@@ -253,17 +254,7 @@ public class CalendarController {
         	     	    Optional<UserGroup> retrieveUserGroup = retrievesGroup.stream()  		      	  	  
         		      	  	    .filter(x -> (x.getUser().equals(user)  ))
         		      	  	    .findFirst();
-        	     	    
-	          			
-	          			//List<UserGroup> recurrentsGroup = userGroupRepository.findByGroupAndType( group, "recurrent");
-	          			//List<UserGroup> abcensesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "absence", timestampEvent);
-	          			//List<UserGroup> retrievesGroup = userGroupRepository.findByGroupAndTypeAndDateat( group, "retrieve", timestampEvent);	 
-        	     	    
-	          	  		//Optional<UserGroup> recurrentUserGroup = userGroupRepository.findByUserAndGroupAndType(user, group, "recurrent");
-//	          			Optional<UserGroup> abcenseUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group, "absence", timestampEvent);
-//	          			Optional<UserGroup> retrieveUserGroup = userGroupRepository.findByUserAndGroupAndTypeAndDateat(user, group, "retrieve", timestampEvent);
-      	     	    
-	          			
+        	     	             
 	          			calendarEvent.setStartAt(startTimestamp);	          			
           	    	    calendarEvent.setTimeOfDay(timestampEvent);          	    	    
 	          	    	calendarEvent.setGroupId(group.getId());
@@ -345,9 +336,9 @@ public class CalendarController {
     	  HashMap<String, Object> response = new HashMap<String , Object>();
     	  response.put("minsEditEvents", appConfig.get().getEventMinutes());
     	  response.put("days", calendarDays);
-    	  response.put("dataPendingRecieveCount", userGroupService.getPendingRecieveCount(user,appConfig.get()));
-  
-    	  
+    	  response.put("dataPendingRecieveCount", userGroupService.getPendingRecieve(user,appConfig.get()));
+
+    
 	      return new ResponseEntity<>(response, HttpStatus.OK);	
 	      
       } catch (Exception e) {
@@ -400,50 +391,12 @@ public class CalendarController {
 						}else {
 							dateMonthString = ""+date.getMonthValue(); 
 						}
-						
-						//System.out.println("el mes es: " + date.getMonthValue());
-						
-						
-						
+												
 				   	    String startEventString =  group.get().getStartTime().toString();
           	    	    startEventString = startEventString.substring(0, startEventString.length() - 3);          	    	  
           	    	    Date parsedStartDate = dateFormat.parse(date.getYear() + "-" + dateMonthString +  "-" +date.getDayOfMonth() + " "  + startEventString);          	    	    
-//        	    	    Timestamp startTimestamp = new java.sql.Timestamp(parsedStartDate.getTime());  
-        	    	    
-        	    	    
-        	    	    
-        	    	    
-//        	    	    Timestamp testStartTimestamp  = new Timestamp(startTimestamp.getTime());
-//        	    	    Timestamp testStartTimestamp2  = new Timestamp(startTimestamp.getTime());
-//        	    	    
-//        	    		Calendar fromCalendarTimestamp  = Calendar.getInstance();
-//        	    		fromCalendarTimestamp.setTime(testStartTimestamp);
-//        	    		fromCalendarTimestamp.add(Calendar.DAY_OF_YEAR, - appConfig.get().getAbsenceDays()); 
-//          	    	    java.sql.Timestamp fromTimestamp = testStartTimestamp ;
-//        	    	    fromTimestamp.setTime(fromCalendarTimestamp.getTime().getTime());
-//        	    	    
-//        	    	    
-//
-//        	    		Calendar toCalendarTimestamp  = Calendar.getInstance();
-//        	    		toCalendarTimestamp.setTime(testStartTimestamp2);
-//        	    		toCalendarTimestamp.add(Calendar.YEAR,  1); 
-//          	    	    java.sql.Timestamp toTimestamp = testStartTimestamp2 ;
-//          	    	    toTimestamp.setTime(toCalendarTimestamp.getTime().getTime());
-          	    	    
-        	    		
-        	    		//fromSQLTimestamp.setTime(fromTimestamp.getTime().getTime());
-        	    		
-          	    	    
-						//a partir de ahora puede recuperar en fechas pasadas
-        	    	    //if(startTimestamp.after(today) ) {
-        	    	    
 
-    	   
-        	    		//comprobar si el usuario tiene  faltas pendientes de dos meses antes de la fecha del evento.
-        	    	    //if( userGroupRepository.countByTypeAndUserAndRetrievedAndDateatBetween("absence", user, false, fromTimestamp, toTimestamp) > 0 ) {	
-        	    	    	
-        
-							
+        	    	    							
 	        	    	    List<UserGroup> recurrentsGroup =  allUserGroups.stream()  		      	  	  
 	           		      	  	    .filter(x -> (x.getGroup().equals(group.get()) && x.getType().equals("recurrent") ))  
 	            		      	  	.collect(Collectors.toList());
@@ -498,37 +451,18 @@ public class CalendarController {
 										userGroupRepository.save(newUserGroup);
 										return ResponseEntity.ok(new MessageResponse("Recuperación creada con éxito!"));
 										
-									}else {
-										
+									}else {										
 										
 										return ResponseEntity
 												.badRequest()
 												.body(new MessageResponse("Error: Solo es posible recuperar clases si falta menos de "+ ((appConfig.get().getEventMinutesToAllow())/60)/24 +" dias para su inicio "));
 										
-										
-									
 									}
-									
-
-	
 									
 								}
 								
 							}
-							
-						
-//						}else {
-//							 return ResponseEntity
-//									.badRequest()
-//									.body(new MessageResponse("Error: Han pasado más de " + appConfig.get().getAbsenceDays() + " días desde su última ausencia, el plazo para recuperar la clase ha terminado."));
-//						}
-							
-//						}else {
-//							  return ResponseEntity
-//										.badRequest()
-//										.body(new MessageResponse("Error: No se pueden crear asistencias en fechas pasadas"));
-//						}
-						
+																	
 					} else {
 						return ResponseEntity
 								.badRequest()
@@ -598,11 +532,9 @@ public class CalendarController {
 	    	    Timestamp startTimestamp2 = new java.sql.Timestamp(parsedStartDate.getTime());  
 	    	    
 	    	    System.out.println("HOy: "+startTimestamp);
+	    	     
 	    	    
-	 
-	    	    
-	    	    //SE RESTAN LOS MINUTOS DE LA CONFIGURACIÓN AL TIMESTAMP DEL EVENTO
-	    	    
+	    	    //SE RESTAN LOS MINUTOS DE LA CONFIGURACIÓN AL TIMESTAMP DEL EVENTO	    	    
 	    	    
 	    	       
 	    	    //limite para abrir (permitir) las ausencias.Hora de inicio menos los minutos de appConfig.getEventMinutesToAllow
@@ -700,12 +632,7 @@ public class CalendarController {
 //									.body(new MessageResponse("Error: No se pueden crear ausencia en fechas pasadas"));
 					}
 						
-						
-						
-					
-					
-					
-				 
+								 
 				}
 				
 			} else {
@@ -714,8 +641,6 @@ public class CalendarController {
 						.body(new MessageResponse("Error: Grupo no encontrado"));
 			}
 				
-
-
 	    }else {
 			  return ResponseEntity
 						.badRequest()

@@ -27,7 +27,6 @@ import com.lolabotona.restapi.service.UserGroupService;
 import com.lolabotona.restapi.model.AppConfig;
 import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.payload.request.ChgPwRequest;
-import com.lolabotona.restapi.payload.request.SignupRequest;
 import com.lolabotona.restapi.payload.response.MessageResponse;
 
 @CrossOrigin(origins = "*", maxAge = 3600)

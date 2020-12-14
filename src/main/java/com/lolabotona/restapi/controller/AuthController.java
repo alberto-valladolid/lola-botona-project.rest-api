@@ -1,7 +1,4 @@
 package com.lolabotona.restapi.controller;
-
-
-
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -20,11 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 
-import com.lolabotona.restapi.model.User;
 import com.lolabotona.restapi.payload.request.LoginRequest;
-import com.lolabotona.restapi.payload.request.SignupRequest;
 import com.lolabotona.restapi.payload.response.JwtResponse;
-import com.lolabotona.restapi.payload.response.MessageResponse;
 import com.lolabotona.restapi.repository.UserRepository;
 import com.lolabotona.restapi.config.jwt.JwtUtils;
 import com.lolabotona.restapi.service.UserDetailsImpl;

@@ -6,6 +6,7 @@ import com.lolabotona.restapi.model.AppConfig;
 import com.lolabotona.restapi.model.FeastDay;
 import com.lolabotona.restapi.model.Group;
 import com.lolabotona.restapi.model.User;
+import com.lolabotona.restapi.model.UserTeacher;
 import com.lolabotona.restapi.model.UserGroup;
 import com.lolabotona.restapi.payload.request.SignupRequest;
 import com.lolabotona.restapi.payload.request.ChgAppConfig;
@@ -18,15 +19,14 @@ import com.lolabotona.restapi.repository.FeastDayRepository;
 import com.lolabotona.restapi.repository.GroupRepository;
 import com.lolabotona.restapi.repository.UserGroupRepository;
 import com.lolabotona.restapi.repository.UserRepository;
+import com.lolabotona.restapi.repository.UserTeacherRepository;
 import com.lolabotona.restapi.service.UserGroupService;
 
-import ch.qos.logback.core.net.SyslogOutputStream;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 
@@ -37,19 +37,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 
-import java.sql.Date;
+
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 //import java.util.Optional;
 import java.util.Optional;
 
@@ -95,12 +93,15 @@ public class AdminController {
 	private GroupRepository groupRepository; 
 	
 	@Autowired 
+	private UserTeacherRepository userTeacherRepository; 
+	
+	@Autowired 
 	private UserGroupService userGroupService; 
 	
 	
 	@PreAuthorize("hasAnyRole('ADMIN')")
 	@GetMapping("/users")
-    public ResponseEntity<List<User>> getAllTutorials() {
+    public ResponseEntity<?> getAllTutorials() {
 	  try {
 		  
 	      List<User> users = new ArrayList<User>();	 
@@ -108,7 +109,8 @@ public class AdminController {
 	      if (users.isEmpty()) {
 	        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	      }	
-	      return new ResponseEntity<>(users, HttpStatus.OK);	
+	      
+	      return new ResponseEntity<>(users, HttpStatus.OK);	      
 	      
        } catch (Exception e) {
 	      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -117,11 +119,33 @@ public class AdminController {
 	
 	@PreAuthorize("hasAnyRole('ADMIN')")
 	@GetMapping("/users/{id}")
-	public ResponseEntity<User> getUserById(@PathVariable("id") long id) {
+	public ResponseEntity<?> getUserById(@PathVariable("id") long id) {
 		Optional<User> user = userRepository.findById( id);
+    	HashMap<String, Object> response = new HashMap<String , Object>();
+
 	
 		if (user.isPresent()) {
-			return new ResponseEntity<>(user.get(), HttpStatus.OK);
+			
+			response.put("user", user.get());
+			List<UserTeacher> userTeacherList  = userTeacherRepository.findByUser(user.get());
+			
+			List<Long> teachersIdList = new ArrayList<Long>();
+
+			if(!userTeacherList.isEmpty()){		
+				
+				for (UserTeacher teacher : userTeacherList) {
+            		  
+					teachersIdList.add(teacher.getTeacher().getId());
+				}
+				
+			}
+			
+			//System.out.println(userTeacherList);
+	    	
+			response.put("UserTeachers", teachersIdList);	  
+	    	  
+		    return new ResponseEntity<>(response, HttpStatus.OK);				
+			
 		} else {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
@@ -143,35 +167,73 @@ public class AdminController {
 	// ejemplo: @PreAuthorize("hasAnyRole('ADMIN') and #newUser.getUsername() == authentication.principal.username ")
 	@PreAuthorize("hasAnyRole('ADMIN')")
     @PutMapping("/users/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable("id") long id, @RequestBody User newUser) {
+   // public ResponseEntity<?> updateUser(@PathVariable("id") long id, @RequestBody User newUser) {
+	 public ResponseEntity<?> updateUser(@PathVariable("id") long id,  @RequestBody SignupRequest signUpRequest) {
+	
       Optional<User> storedUserData = userRepository.findById(id);
       
       
       if (storedUserData.isPresent()) { 
     	  User user = storedUserData.get();    	
-          if(user.getUsername().equals(newUser.getUsername())   ){
+          if(user.getUsername().equals(signUpRequest.getUsername())   ){
               
-              user.setRoles(newUser.getRole());
-              user.setName(newUser.getName());  
-              user.setUsername(newUser.getUsername());  
+              user.setRoles(signUpRequest.getRole());
+              user.setName(signUpRequest.getName());  
+              user.setUsername(signUpRequest.getUsername());  
+              user.setType(signUpRequest.getType()); 
               
-              if(newUser.getPassword()!= "") {    
-              	user.setPassword(passwordEncoder.encode(newUser.getPassword()));
-              }               
+              if(signUpRequest.getPassword()!= "") {    
+              	user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
+              }  
+              
+              
+              
+              userTeacherRepository.deleteInBatch(userTeacherRepository.findByUser(user));
+              
+              
+              if(signUpRequest.getTeachers() != null ) {
+            	  
+            	  for (int teacher : signUpRequest.getTeachers()) {
+            		  
+            		  Optional<User> teacherObject =  userRepository.findById((long) teacher);
+            		  
+            		  if(teacherObject.isPresent()) {
+	            		  UserTeacher newUserTeacher = new UserTeacher(user, teacherObject.get());
+	            		  userTeacherRepository.save(newUserTeacher);
+            		  }
+            	  }
+              }
               
               return new ResponseEntity<>(userRepository.save(user), HttpStatus.OK);
               
           } else {
         	 
-        	  if(!userRepository.existsByUsername(newUser.getUsername())   ) {       
+        	  if(!userRepository.existsByUsername(signUpRequest.getUsername())   ) {       
                 
-                  user.setRoles(newUser.getRole());
-                  user.setName(newUser.getName());  
-                  user.setUsername(newUser.getUsername());  
+                  user.setRoles(signUpRequest.getRole());
+                  user.setName(signUpRequest.getName());  
+                  user.setUsername(signUpRequest.getUsername());  
+                  user.setType(signUpRequest.getType()); 
                   
-                  if(newUser.getPassword()!= "") {    
-                  	user.setPassword(passwordEncoder.encode(newUser.getPassword()));
-                  }               
+                  if(signUpRequest.getPassword()!= "") {    
+                  	user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
+                  }    
+                  
+                  userTeacherRepository.deleteInBatch(userTeacherRepository.findByUser(user));
+                  
+                  
+                  if(signUpRequest.getTeachers() != null ) {
+                	  
+                	  for (int teacher : signUpRequest.getTeachers()) {
+                		  
+                		  Optional<User> teacherObject =  userRepository.findById((long) teacher);
+                		  
+                		  if(teacherObject.isPresent()) {
+    	            		  UserTeacher newUserTeacher = new UserTeacher(user, teacherObject.get());
+    	            		  userTeacherRepository.save(newUserTeacher);
+                		  }
+                	  }
+                  }
                   
                   return new ResponseEntity<>(userRepository.save(user), HttpStatus.OK);
                 
@@ -197,24 +259,43 @@ public class AdminController {
 					.badRequest()
 					.body(new MessageResponse("Error: Ya existe un usuario con ese teléfono!"));
 		}
-
+		
 		// Create new user's account
 		User user = new User(signUpRequest.getUsername(), 
 							 signUpRequest.getRole(),					
 							 passwordEncoder.encode(signUpRequest.getPassword()),
-							 signUpRequest.getName());
+							 signUpRequest.getName(),
+							 signUpRequest.getType()							 
+		);
 
 		String requestRole = signUpRequest.getRole();
 
-
 		if (requestRole == null) {
-
-				new RuntimeException("Error: Role is required.");
+				new RuntimeException("Error: Role is required.");		
+		}
 		
+		if (signUpRequest.getType() != "alumn" || signUpRequest.getType() != "teacher") {
+			new RuntimeException("Error: Type must be 'alumn' or 'teacher'.");	
 		}
 		
 		user.setRoles(requestRole);
-		userRepository.save(user);
+		userRepository.save(user);	
+		
+		if(signUpRequest.getTeachers().length > 0) {
+		    for(int i=0; i<signUpRequest.getTeachers().length; i++) {
+		    	
+		    	Optional<User> userTeacher = userRepository.findById((long)signUpRequest.getTeachers()[i]);
+				if (userTeacher.isPresent()) {		
+					
+		    		UserTeacher newUserTeacher = new UserTeacher(user, userTeacher.get());	
+		    		userTeacherRepository.save(newUserTeacher);
+		    		
+		    				
+		    	}		    					 
+	
+		    }
+		}
+		
 
 		return ResponseEntity.ok(new MessageResponse("Usuario creado con éxito!"));
 	}
@@ -222,18 +303,25 @@ public class AdminController {
 	
 	@GetMapping("/groups")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<List<Group>> getGroups() {
+	public ResponseEntity<?> getGroups() {
 	
 		  try {
 			   
 		      List<Group> groups = new ArrayList<Group>();	 
 		      groupRepository.findAll().forEach(groups::add);	
-		      
+		      System.out.println(groups);
 		      if (groups.isEmpty()) {
 		        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 		      }
 		      
-		      return new ResponseEntity<>(groups, HttpStatus.OK);	
+		      List<User> teachers = new ArrayList<User>();	 
+		      teachers = userRepository.findByType("teacher");  		      
+		      
+		      HashMap<String, Object> response = new HashMap<String , Object>();
+	    	  response.put("groups", groups);
+	    	  response.put("teachers", teachers);		      
+		      
+	    	  return new ResponseEntity<>(response, HttpStatus.OK);	
 		      
 	       } catch (Exception e) {
 		      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -258,36 +346,42 @@ public class AdminController {
 	public ResponseEntity<?> addGroupByAdmin(@Valid @RequestBody NewGroupRequest newGroupRequest) throws ParseException {
 		
 		List<Group> groups = new ArrayList<Group>();			
-		groups = groupRepository.findByDayofweekAndShoworder(newGroupRequest.getDayofweek(), newGroupRequest.getShoworder());
-				
+		groups = groupRepository.findByDayofweekAndShoworder(newGroupRequest.getDayofweek(), newGroupRequest.getShoworder());				
 		
 		if ( groups.isEmpty()) { 
 			
-			String stringTime; 
-			
-			if(newGroupRequest.getStartTimeHours() < 10) {
-				stringTime = "0"+  newGroupRequest.getStartTimeHours(); 
-			}else {
-				stringTime =  ""+ newGroupRequest.getStartTimeHours(); 
-			}
-			
-		    stringTime += ":"; 
-		    		
-			if(newGroupRequest.getStartTimeMins() < 10) {
-				stringTime += "0"+  newGroupRequest.getStartTimeMins(); 
-			}else {
-				stringTime += ""+  newGroupRequest.getStartTimeMins(); 
-			}
-			
-			
-			SimpleDateFormat dateSDF = new SimpleDateFormat("HH:mm");
-		
-			long ms = dateSDF.parse(stringTime).getTime();
-			Time startTime = new Time(ms);		
+			Optional<User> teacher = userRepository.findByIdAndType(newGroupRequest.getTeacherId(), "teacher");
+			System.out.println(newGroupRequest.getTeacherId());
+			if (teacher.isPresent()) {
 				
-			Group group = new Group(newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getShoworder(),  newGroupRequest.getDayofweek(), newGroupRequest.isActive(), startTime);
-			groupRepository.save(group);
-			return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));			
+				String stringTime; 				
+				if(newGroupRequest.getStartTimeHours() < 10) {
+					stringTime = "0"+  newGroupRequest.getStartTimeHours(); 
+				}else {
+					stringTime =  ""+ newGroupRequest.getStartTimeHours(); 
+				}
+				
+			    stringTime += ":"; 
+			    		
+				if(newGroupRequest.getStartTimeMins() < 10) {
+					stringTime += "0"+  newGroupRequest.getStartTimeMins(); 
+				}else {
+					stringTime += ""+  newGroupRequest.getStartTimeMins(); 
+				}
+				
+				
+				SimpleDateFormat dateSDF = new SimpleDateFormat("HH:mm");
+			
+				long ms = dateSDF.parse(stringTime).getTime();
+				Time startTime = new Time(ms);		
+					
+				Group group = new Group(newGroupRequest.getCapacity(), newGroupRequest.getDescription(), newGroupRequest.getShoworder(),  newGroupRequest.getDayofweek(), newGroupRequest.isActive(), startTime, teacher.get().getId() );
+				groupRepository.save(group);
+				return ResponseEntity.ok(new MessageResponse("Grupo creado con éxito!"));					
+				
+			} else {	
+				return ResponseEntity.badRequest().body(new MessageResponse("Error: Teacherid not found."));	
+			}					
 			
 		}else {			
 			return ResponseEntity.badRequest().body(new MessageResponse("Error: Ya existe un grupo en ese día y en ese orden"));
@@ -311,9 +405,7 @@ public class AdminController {
 
 	@PreAuthorize("hasAnyRole('ADMIN')")
     @PutMapping("/groups/{id}")
-    public ResponseEntity<?> updateGroup(@PathVariable("id") long id,@Valid @RequestBody NewGroupRequest newGroup) throws ParseException {
-		
-
+    public ResponseEntity<?> updateGroup(@PathVariable("id") long id,@Valid @RequestBody NewGroupRequest newGroup) throws ParseException {	
 		
 		Optional<Group> storedGroupData = groupRepository.findById(id);	
 		
@@ -345,8 +437,7 @@ public class AdminController {
 				SimpleDateFormat dateSDF = new SimpleDateFormat("HH:mm");
 			
 				long ms = dateSDF.parse(stringTime).getTime();
-				Time startTime = new Time(ms);
-				
+				Time startTime = new Time(ms);			
 				Group group = storedGroupData.get(); 
 				group.setStartTime(startTime);
 		    	group.setCapacity(newGroup.getCapacity());
@@ -354,6 +445,7 @@ public class AdminController {
 		    	group.setshoworder(newGroup.getShoworder());
 		    	group.setdayofweek(newGroup.getDayofweek());
 		    	group.setActive(newGroup.isActive());  
+		    	group.setTeacherid(newGroup.getTeacherId());
 	            return new ResponseEntity<>(groupRepository.save(group), HttpStatus.OK); 
 	              
 			}else {	
@@ -871,16 +963,14 @@ public class AdminController {
 						return ResponseEntity.badRequest().body(new MessageResponse("Error: Type debe ser recurrent, retrieve o absence "  ));
 					}
 						
-						
-				
-					
-						
 				}
 				
 			}
 			
 			
 		}
+		
+
 		
 		
 		
@@ -896,5 +986,27 @@ public class AdminController {
 //		}			
 		
 	}	
+	
+	
+	
+	//@PreAuthorize("hasAnyRole('ADMIN')")
+	@GetMapping("/users/teachers")
+    public ResponseEntity<?> getAllTeachers() {
+	  try {		 
+
+	      List<User> teachers = new ArrayList<User>();	 
+	      teachers = userRepository.findByType("teacher");
+	      if (teachers.isEmpty()) {
+	        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	      }	  
+	      	      
+	      return new ResponseEntity<>(teachers, HttpStatus.OK);	      
+	      
+       } catch (Exception e) {
+	      return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+       }
+     }
+	
+	
 	
 }

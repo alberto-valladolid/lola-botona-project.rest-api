@@ -10,6 +10,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 //import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.Getter;
+import lombok.Setter;
 import java.util.Objects;
 import java.util.Set;
 
@@ -17,6 +19,8 @@ import javax.persistence.*;
 
 
 @Entity
+@Getter
+@Setter
 @Table(	name = "users", 
 uniqueConstraints = { 
 	@UniqueConstraint(columnNames = "username")
@@ -32,6 +36,18 @@ public class User {
 	@JsonManagedReference(value="user")
     @OneToMany(mappedBy = "user",cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserGroup> groupSet;
+	
+	
+	@JsonManagedReference(value="user2")
+    @OneToMany(mappedBy = "user",cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserTeacher> userTeacherSet; //profesores asignados a este usuario
+	
+//	FUNCIONA
+//    @OneToMany(mappedBy = "teacher",cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+//    private Set<Group> groupsWitchIsTeacher; 
+	
+	
+	
 	
     @NotBlank
     @Size(min = 3, max = 20)
@@ -49,16 +65,19 @@ public class User {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 	
-	
+    @NotBlank
+    @Size(min = 1, max = 100)
+    private String type ; //alumn or teacher
 	
 	public User() {
 	}
 
-	public User(String username, String role, String password, String name) {
+	public User(String username, String role, String password, String name, String type) {
 		this.username = username;
 		this.role = role;
 		this.password = password;
 		this.name = name; 
+		this.type = type; 
 	}
 
 	
@@ -71,12 +90,28 @@ public class User {
 		this.id = id;
 	}
 	
+	public String getType() {
+		return type;
+	}
+	
+	public void setType(String type) {
+		this.type = type;
+	}
+	
 	public Set<UserGroup> getGroupSet() {
         return groupSet;
     }
 	
 	public void setGroupSet(Set<UserGroup> groupSet) {
         this.groupSet = groupSet;
+    } 
+	
+	public void setUserTeacherSet(Set<UserTeacher> userTeacherSet) {
+        this.userTeacherSet = userTeacherSet;
+    } 
+		
+	public Set<UserTeacher> getUserTeacherSet() {
+	   return userTeacherSet;
     } 
 	
 	public String getUsername() {
@@ -113,7 +148,7 @@ public class User {
 
 	@Override
 	public String toString() {
-		return "User [id=" + id + ", username=" + username + ", role=" + role + ", name=" + name + " , password=" + password + "]";
+		return "User [id=" + id + ", username=" + username + ", role=" + role + ", name=" + name + " , password=" + password + " , type=" + type +  "]";
 	}
 	
     @Override
