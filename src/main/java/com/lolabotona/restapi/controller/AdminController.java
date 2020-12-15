@@ -359,7 +359,6 @@ public class AdminController {
 				}else {
 					stringTime =  ""+ newGroupRequest.getStartTimeHours(); 
 				}
-				
 			    stringTime += ":"; 
 			    		
 				if(newGroupRequest.getStartTimeMins() < 10) {
@@ -388,29 +387,6 @@ public class AdminController {
 		
 		
 	}
-	
-	
-	@PreAuthorize("hasAnyRole('ADMIN')")
-	@GetMapping("/actualizargrupos")
-	public ResponseEntity<?> actualizargrupos(  NewGroupRequest newGroupRequest) throws ParseException {
-		
-		  List<Group> groups = new ArrayList<Group>();	 
-	      groupRepository.findAll().forEach(groups::add);					
-		
-		
-		Optional<User> teacher = userRepository.findByIdAndType(1, "teacher");
-		
-		for (Group group : groups) { 
-			
-			group.setTeacher(teacher.get());
-			groupRepository.save(group);
-		}
-		
-		return new ResponseEntity<>(groups, HttpStatus.OK);
-		
-		
-	}
-	
 	
 	
 	@PreAuthorize("hasAnyRole('ADMIN')")

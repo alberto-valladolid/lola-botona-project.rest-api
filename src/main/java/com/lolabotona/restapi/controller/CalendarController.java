@@ -337,6 +337,7 @@ public class CalendarController {
     	  
     	  HashMap<String, Object> response = new HashMap<String , Object>();
     	  response.put("minsEditEvents", appConfig.get().getEventMinutes());
+    	  response.put("minsToRecoverAnAbsence", appConfig.get().getAbsenceDays());
     	  response.put("days", calendarDays);
     	  response.put("dataPendingRecieveCount", userGroupService.getPendingRecieve(user,appConfig.get()));
 
